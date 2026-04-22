@@ -76,14 +76,14 @@ Beispiel bei Startwert **8**:
 
 Normalerweise darf pro Zug nur **eine** Karte gespielt werden.
 
-Eine Ausnahme gilt, wenn ein Spieler mehrere **gleichwertige** Karten gleichzeitig legal ausspielen kann. Dann darf er diese in **einem** Zug zusammen ablegen.
+Eine Ausnahme gilt nur dann, wenn ein Spieler in seinem Zug **alle** Karten seiner Hand regelkonform ablegen kann. Nur in diesem Fall darf er mehrere Karten in **einem** Zug spielen.
 
 Beispiele:
 
-- Ein Spieler darf mehrere Startkarten desselben Startwerts gleichzeitig auslegen und damit mehrere Reihen auf einmal eroeffnen.
-- Ein Spieler darf auch mehrere Karten desselben Werts gleichzeitig an verschiedene bereits offene Reihen anlegen, sofern jede einzelne Karte dort regelkonform passt.
+- Ein Spieler haelt nur noch **10 Karo** und **10 Kreuz** auf der Hand. Beide Karten sind legal spielbar, also darf er beide zusammen ausspielen und die Runde beenden.
+- Ein Spieler haelt noch drei Karten, kann aber davon nur zwei legal legen. Dann darf er **nicht** mehrere Karten spielen, sondern nur eine Karte wie im normalen Zug.
 
-Es duerfen dabei nur Karten **eines einzigen Werts** gemeinsam gespielt werden. Karten unterschiedlicher Werte duerfen nicht kombiniert werden.
+Bei dieser Ausnahme duerfen auch Karten unterschiedlicher Werte kombiniert werden, sofern jede einzelne Karte nach den normalen Legeregeln gueltig ist.
 
 ## Passen
 
@@ -98,4 +98,4 @@ Die Runde endet sofort, sobald ein Spieler seine letzte Handkarte abgelegt hat. 
 - Der gewaehlte Startwert ist **10**.
 - Auf den Tisch duerfen zunaechst nur 10er gelegt werden, um Reihen zu eroeffnen.
 - Liegt zum Beispiel bereits die **10 Herz**, dann duerfen an diese Reihe nur die **9 Herz** oder der **Bube Herz** angelegt werden.
-- Hat ein Spieler gleichzeitig die **10 Karo** und die **10 Kreuz**, darf er beide zusammen ausspielen, weil sie denselben Wert haben und beide legal sind.
+- Hat ein Spieler am Zug als letzte zwei Handkarten die **10 Karo** und die **10 Kreuz**, darf er beide zusammen ausspielen, weil er damit alle verbleibenden Handkarten ablegt.
