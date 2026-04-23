@@ -1,0 +1,287 @@
+.app-shell {
+  width: min(1400px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+.hero-panel,
+.panel {
+  border: 1px solid rgba(143, 156, 220, 0.2);
+  background: rgba(18, 23, 42, 0.82);
+  backdrop-filter: blur(18px);
+  border-radius: 20px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+}
+
+.hero-panel {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #8fb0ff;
+  font-size: 0.85rem;
+  margin: 0 0 8px;
+}
+
+.hero-panel h1,
+.panel h2,
+.panel h3 {
+  margin: 0;
+}
+
+.hero-panel h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.05;
+}
+
+.hero-copy {
+  max-width: 68ch;
+  color: #bbc6ec;
+  margin-top: 12px;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.layout-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1.9fr;
+  gap: 20px;
+}
+
+.panel {
+  padding: 24px;
+}
+
+.auth-panel {
+  grid-column: 1 / -1;
+}
+
+.table-panel {
+  grid-column: 1 / -1;
+}
+
+.auth-grid,
+.row-grid,
+.hand-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.auth-card,
+.row-card,
+.history-entry,
+.player-card {
+  border-radius: 16px;
+  border: 1px solid rgba(143, 156, 220, 0.18);
+  background: rgba(30, 37, 65, 0.72);
+  padding: 16px;
+}
+
+.auth-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-header,
+.button-row,
+.player-card,
+.player-meta,
+.status-stack,
+.facts-grid {
+  display: flex;
+}
+
+.section-header,
+.player-card {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-header {
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.button-row {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+button,
+input {
+  border-radius: 12px;
+  border: 1px solid rgba(143, 156, 220, 0.28);
+}
+
+button {
+  background: linear-gradient(180deg, #4d72ff 0%, #3553dd 100%);
+  color: white;
+  padding: 12px 16px;
+  font-weight: 600;
+  transition:
+    transform 120ms ease,
+    opacity 120ms ease,
+    box-shadow 120ms ease;
+}
+
+button:hover:enabled {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(53, 83, 221, 0.35);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.secondary-button {
+  background: rgba(33, 40, 70, 0.95);
+}
+
+input {
+  padding: 12px 14px;
+  background: rgba(15, 19, 34, 0.9);
+  color: #ecf0ff;
+}
+
+.session-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(80, 120, 255, 0.18);
+  color: #d6e1ff;
+}
+
+.error-banner,
+.message-box {
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.error-banner {
+  background: rgba(178, 50, 77, 0.24);
+  border: 1px solid rgba(255, 120, 154, 0.3);
+  margin-bottom: 20px;
+}
+
+.message-box {
+  background: rgba(73, 94, 165, 0.18);
+  border: 1px solid rgba(143, 156, 220, 0.2);
+}
+
+.action-box {
+  margin-bottom: 18px;
+}
+
+.facts-grid {
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.facts-grid dt,
+.muted-copy,
+.player-card p,
+.history-entry p,
+.row-details span {
+  color: #a9b6de;
+}
+
+.facts-grid dd {
+  margin: 4px 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.player-list,
+.history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.player-card--viewer {
+  outline: 2px solid rgba(120, 171, 255, 0.6);
+}
+
+.player-card p {
+  margin: 4px 0 0;
+}
+
+.player-meta {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  text-align: right;
+}
+
+.row-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.row-card h3 {
+  margin-bottom: 12px;
+}
+
+.row-details {
+  display: grid;
+  gap: 6px;
+}
+
+.hand-grid {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  margin-bottom: 16px;
+}
+
+.card-button {
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: left;
+  background: rgba(24, 31, 56, 0.96);
+}
+
+.card-button small {
+  color: #9fb0e5;
+}
+
+.card-button--selected {
+  outline: 2px solid rgba(123, 255, 227, 0.8);
+}
+
+.card-button--playable {
+  border-color: rgba(142, 194, 255, 0.8);
+}
+
+@media (max-width: 1024px) {
+  .layout-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-panel,
+  .section-header,
+  .player-card {
+    flex-direction: column;
+  }
+
+  .player-meta {
+    align-items: flex-start;
+    text-align: left;
+  }
+}
