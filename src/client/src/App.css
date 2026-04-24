@@ -98,6 +98,10 @@
   padding: 24px;
 }
 
+.seating-panel {
+  grid-column: span 2;
+}
+
 .history-panel {
   max-width: 460px;
   justify-self: start;
@@ -340,9 +344,30 @@ input {
   gap: 6px;
 }
 
+.hand-suit-rows {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.hand-suit-row {
+  display: grid;
+  gap: 10px;
+}
+
+.hand-suit-title {
+  color: var(--theme-eyebrow);
+}
+
 .hand-grid {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  margin-bottom: 16px;
+}
+
+.hand-empty-row {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px dashed var(--theme-border-soft);
 }
 
 .card-button {
@@ -373,6 +398,10 @@ input {
 
   .history-panel {
     max-width: none;
+  }
+
+  .seating-panel {
+    grid-column: auto;
   }
 
   .hero-panel,

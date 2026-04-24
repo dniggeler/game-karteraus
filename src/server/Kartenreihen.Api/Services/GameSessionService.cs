@@ -6,23 +6,16 @@ using Microsoft.Extensions.Options;
 
 namespace Kartenreihen.Api.Services;
 
-public sealed class GameSessionService
+public sealed class GameSessionService(IHubContext<GameHub> hubContext, IOptions<GameOptions> options)
 {
     private readonly object _syncRoot = new();
-    private readonly IHubContext<GameHub> _hubContext;
-    private readonly string _adminCode;
+    private readonly string _adminCode = options.Value.AdminCode;
     private readonly Random _random = new();
     private readonly SimpleAiStrategy _aiStrategy = new();
     private readonly List<HumanPlayerSession> _humanPlayers = [];
     private readonly HashSet<string> _adminTokens = new(StringComparer.Ordinal);
     private MatchState? _match;
     private int _nextAiNumber = 1;
-
-    public GameSessionService(IHubContext<GameHub> hubContext, IOptions<GameOptions> options)
-    {
-        _hubContext = hubContext;
-        _adminCode = options.Value.AdminCode;
-    }
 
     public async Task<SessionResponse> JoinPlayerAsync(string name)
     {
@@ -546,7 +539,7 @@ public sealed class GameSessionService
             card.DisplayName);
 
     private Task NotifyStateChangedAsync() =>
-        _hubContext.Clients.Group("game").SendAsync("StateChanged");
+        hubContext.Clients.Group("game").SendAsync("StateChanged");
 
     private sealed record HumanPlayerSession(string PlayerId, string Name, string Token);
 }

@@ -6,6 +6,8 @@ import { api } from './api'
 import type { CardView, GameSnapshot, SessionState } from './types'
 
 const STORAGE_KEY = 'kartenreihen-session'
+const SUIT_ORDER = ['Hearts', 'Diamonds', 'Clubs', 'Spades'] as const
+const RANK_ORDER = ['Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Ace'] as const
 
 function App() {
   const [session, setSession] = useState<SessionState | null>(loadStoredSession)
@@ -94,6 +96,20 @@ function App() {
     () =>
       snapshot?.viewerHand.filter((card) => selectedCards.includes(card.code)) ?? [],
     [selectedCards, snapshot],
+  )
+  const playableCardCodes = useMemo(
+    () => new Set(snapshot?.playableCards.map((card) => card.code) ?? []),
+    [snapshot],
+  )
+  const handRows = useMemo(
+    () =>
+      SUIT_ORDER.map((suit) => ({
+        suit,
+        cards: (snapshot?.viewerHand ?? [])
+          .filter((card) => card.suit === suit)
+          .sort(compareCardsByRank),
+      })),
+    [snapshot],
   )
 
   const joinAsPlayer = async () => {
@@ -302,7 +318,7 @@ function App() {
           )}
         </aside>
 
-        <section className="panel">
+        <section className="panel seating-panel">
           <div className="section-header">
             <h2>Lobby und Sitzordnung</h2>
             {session?.role === 'admin' && snapshot ? (
@@ -431,25 +447,34 @@ function App() {
 
           {snapshot?.viewerRole === 'player' ? (
             <>
-              <div className="hand-grid">
-                {snapshot.viewerHand.map((card) => {
-                  const isSelected = selectedCards.includes(card.code)
-                  const isPlayable = snapshot.playableCards.some(
-                    (playableCard) => playableCard.code === card.code,
-                  )
+              <div className="hand-suit-rows">
+                {handRows.map((row) => (
+                  <section key={row.suit} className="hand-suit-row">
+                    <h3 className="hand-suit-title">{formatSuit(row.suit)}</h3>
+                    <div className="hand-grid">
+                      {row.cards.length ? (
+                        row.cards.map((card) => {
+                          const isSelected = selectedCards.includes(card.code)
+                          const isPlayable = playableCardCodes.has(card.code)
 
-                  return (
-                    <button
-                      key={card.code}
-                      className={`card-button${isSelected ? ' card-button--selected' : ''}${isPlayable ? ' card-button--playable' : ''}`}
-                      onClick={() => toggleCardSelection(card)}
-                      disabled={isBusy || !snapshot.canPlay}
-                    >
-                      <span>{card.label}</span>
-                      <small>{card.code}</small>
-                    </button>
-                  )
-                })}
+                          return (
+                            <button
+                              key={card.code}
+                              className={`card-button${isSelected ? ' card-button--selected' : ''}${isPlayable ? ' card-button--playable' : ''}`}
+                              onClick={() => toggleCardSelection(card)}
+                              disabled={isBusy || !snapshot.canPlay}
+                            >
+                              <span>{card.label}</span>
+                              <small>{card.code}</small>
+                            </button>
+                          )
+                        })
+                      ) : (
+                        <p className="muted-copy hand-empty-row">Keine Karten</p>
+                      )}
+                    </div>
+                  </section>
+                ))}
               </div>
 
               <div className="button-row">
@@ -553,6 +578,15 @@ function formatStatus(status: string) {
       InProgress: 'Laeuft',
     }[status] ?? status
   )
+}
+
+function compareCardsByRank(left: CardView, right: CardView) {
+  return getRankSortIndex(left.rank) - getRankSortIndex(right.rank)
+}
+
+function getRankSortIndex(rank: string) {
+  const index = RANK_ORDER.indexOf(rank as (typeof RANK_ORDER)[number])
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index
 }
 
 function getSeatStyle(index: number, totalPlayers: number): CSSProperties {
