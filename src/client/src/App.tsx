@@ -214,7 +214,9 @@ function App() {
   }
 
   return (
-    <main className="app-shell">
+    <main
+      className={`app-shell${session?.role === 'admin' ? ' app-shell--admin' : ' app-shell--player'}`}
+    >
       <header className="hero-panel">
         <div>
           <p className="eyebrow">Kartenreihen</p>

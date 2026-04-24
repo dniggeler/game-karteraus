@@ -1,13 +1,49 @@
 .app-shell {
+  --theme-accent-rgb: 143, 156, 220;
+  --theme-panel-bg: rgba(18, 23, 42, 0.82);
+  --theme-card-bg: rgba(30, 37, 65, 0.72);
+  --theme-border-strong: rgba(var(--theme-accent-rgb), 0.28);
+  --theme-border-soft: rgba(var(--theme-accent-rgb), 0.2);
+  --theme-border-card: rgba(var(--theme-accent-rgb), 0.18);
+  --theme-eyebrow: #8fb0ff;
+  --theme-copy: #bbc6ec;
+  --theme-muted: #a9b6de;
+  --theme-pill-bg: rgba(80, 120, 255, 0.18);
+  --theme-pill-text: #d6e1ff;
+  --theme-message-bg: rgba(73, 94, 165, 0.18);
+  --theme-button-start: #4d72ff;
+  --theme-button-end: #3553dd;
+  --theme-button-shadow: rgba(53, 83, 221, 0.35);
+  --theme-secondary-bg: rgba(33, 40, 70, 0.95);
+  --theme-viewer-outline: rgba(120, 171, 255, 0.6);
+  --theme-playable: rgba(142, 194, 255, 0.8);
   width: min(1400px, calc(100% - 32px));
   margin: 0 auto;
   padding: 32px 0 48px;
 }
 
+.app-shell--admin {
+  --theme-accent-rgb: 232, 156, 92;
+  --theme-panel-bg: rgba(45, 23, 18, 0.86);
+  --theme-card-bg: rgba(72, 38, 28, 0.78);
+  --theme-eyebrow: #ffb36b;
+  --theme-copy: #f1d4bf;
+  --theme-muted: #dfb89e;
+  --theme-pill-bg: rgba(255, 157, 77, 0.18);
+  --theme-pill-text: #ffe1c5;
+  --theme-message-bg: rgba(191, 110, 52, 0.18);
+  --theme-button-start: #d97733;
+  --theme-button-end: #b6531f;
+  --theme-button-shadow: rgba(182, 83, 31, 0.35);
+  --theme-secondary-bg: rgba(88, 46, 31, 0.95);
+  --theme-viewer-outline: rgba(255, 179, 107, 0.72);
+  --theme-playable: rgba(255, 190, 118, 0.82);
+}
+
 .hero-panel,
 .panel {
-  border: 1px solid rgba(143, 156, 220, 0.2);
-  background: rgba(18, 23, 42, 0.82);
+  border: 1px solid var(--theme-border-soft);
+  background: var(--theme-panel-bg);
   backdrop-filter: blur(18px);
   border-radius: 20px;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
@@ -24,7 +60,7 @@
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: #8fb0ff;
+  color: var(--theme-eyebrow);
   font-size: 0.85rem;
   margin: 0 0 8px;
 }
@@ -42,7 +78,7 @@
 
 .hero-copy {
   max-width: 68ch;
-  color: #bbc6ec;
+  color: var(--theme-copy);
   margin-top: 12px;
 }
 
@@ -86,8 +122,8 @@
 .history-entry,
 .player-card {
   border-radius: 16px;
-  border: 1px solid rgba(143, 156, 220, 0.18);
-  background: rgba(30, 37, 65, 0.72);
+  border: 1px solid var(--theme-border-card);
+  background: var(--theme-card-bg);
   padding: 16px;
 }
 
@@ -125,11 +161,11 @@
 button,
 input {
   border-radius: 12px;
-  border: 1px solid rgba(143, 156, 220, 0.28);
+  border: 1px solid var(--theme-border-strong);
 }
 
 button {
-  background: linear-gradient(180deg, #4d72ff 0%, #3553dd 100%);
+  background: linear-gradient(180deg, var(--theme-button-start) 0%, var(--theme-button-end) 100%);
   color: white;
   padding: 12px 16px;
   font-weight: 600;
@@ -141,7 +177,7 @@ button {
 
 button:hover:enabled {
   transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(53, 83, 221, 0.35);
+  box-shadow: 0 14px 30px var(--theme-button-shadow);
 }
 
 button:disabled {
@@ -150,7 +186,7 @@ button:disabled {
 }
 
 .secondary-button {
-  background: rgba(33, 40, 70, 0.95);
+  background: var(--theme-secondary-bg);
 }
 
 input {
@@ -165,8 +201,8 @@ input {
   gap: 8px;
   padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(80, 120, 255, 0.18);
-  color: #d6e1ff;
+  background: var(--theme-pill-bg);
+  color: var(--theme-pill-text);
 }
 
 .error-banner,
@@ -182,8 +218,8 @@ input {
 }
 
 .message-box {
-  background: rgba(73, 94, 165, 0.18);
-  border: 1px solid rgba(143, 156, 220, 0.2);
+  background: var(--theme-message-bg);
+  border: 1px solid var(--theme-border-soft);
 }
 
 .action-box {
@@ -200,7 +236,7 @@ input {
 .player-card p,
 .history-entry p,
 .row-details span {
-  color: #a9b6de;
+  color: var(--theme-muted);
 }
 
 .facts-grid dd {
@@ -216,7 +252,7 @@ input {
 }
 
 .player-card--viewer {
-  outline: 2px solid rgba(120, 171, 255, 0.6);
+  outline: 2px solid var(--theme-viewer-outline);
 }
 
 .player-card p {
@@ -266,7 +302,7 @@ input {
 }
 
 .card-button--playable {
-  border-color: rgba(142, 194, 255, 0.8);
+  border-color: var(--theme-playable);
 }
 
 @media (max-width: 1024px) {
