@@ -1,5 +1,6 @@
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import { useEffect, useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
 import './App.css'
 import { api } from './api'
 import type { CardView, GameSnapshot, SessionState } from './types'
@@ -329,26 +330,49 @@ function App() {
             ) : null}
           </div>
 
-          <div className="player-list">
-            {snapshot?.players.map((player) => (
-              <article
-                key={player.id}
-                className={`player-card${player.isViewer ? ' player-card--viewer' : ''}`}
-              >
-                <div>
-                  <strong>{player.name}</strong>
-                  <p>
-                    {player.kind === 'Ai' ? 'AI-Spieler' : 'Menschlicher Spieler'}
-                  </p>
+          {snapshot?.players.length ? (
+            <div className="round-table">
+              <div className="round-table__felt">
+                <span className="round-table__label">Tischmitte</span>
+                <strong>{snapshot.players.length} Spieler</strong>
+                <span className="muted-copy">
+                  {snapshot.currentRound
+                    ? `Runde ${snapshot.currentRound.number} laeuft`
+                    : 'Wartet auf den Spielstart'}
+                </span>
+              </div>
+
+              {snapshot.players.map((player, index) => (
+                <div
+                  key={player.id}
+                  className="round-table__seat"
+                  style={getSeatStyle(index, snapshot.players.length)}
+                >
+                  <article
+                    className={`player-card${player.isViewer ? ' player-card--viewer' : ''}`}
+                  >
+                    <div>
+                      <strong className="player-name">
+                        <span>{player.name}</span>
+                        {player.kind === 'Ai' ? (
+                          <span className="player-name__badge" aria-label="AI-Spieler" title="AI-Spieler">
+                            ✦
+                          </span>
+                        ) : null}
+                      </strong>
+                    </div>
+                    <div className="player-meta">
+                      <span>{player.cardCount} Karten</span>
+                      {player.isCurrentTurn ? <span>am Zug</span> : null}
+                      {player.isStartValueChooser ? <span>waehlt Startwert</span> : null}
+                    </div>
+                  </article>
                 </div>
-                <div className="player-meta">
-                  <span>{player.cardCount} Karten</span>
-                  {player.isCurrentTurn ? <span>am Zug</span> : null}
-                  {player.isStartValueChooser ? <span>waehlt Startwert</span> : null}
-                </div>
-              </article>
-            )) ?? <p>Noch keine Spieler in der Lobby.</p>}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p>Noch keine Spieler in der Lobby.</p>
+          )}
         </section>
 
         <section className="panel table-panel">
@@ -529,6 +553,21 @@ function formatStatus(status: string) {
       InProgress: 'Laeuft',
     }[status] ?? status
   )
+}
+
+function getSeatStyle(index: number, totalPlayers: number): CSSProperties {
+  if (totalPlayers <= 0) {
+    return {}
+  }
+
+  const angle = -Math.PI / 2 + (index * 2 * Math.PI) / totalPlayers
+  const radius =
+    totalPlayers === 1 ? 36 : totalPlayers === 2 ? 39 : totalPlayers === 3 ? 41 : 42
+
+  return {
+    left: `${50 + Math.cos(angle) * radius}%`,
+    top: `${50 + Math.sin(angle) * radius}%`,
+  }
 }
 
 function loadStoredSession(): SessionState | null {
