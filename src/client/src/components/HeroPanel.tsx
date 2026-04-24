@@ -10,7 +10,7 @@ export function HeroPanel({ session, onLogout }: HeroPanelProps) {
     <header className="hero-panel">
       <div>
         <p className="eyebrow">Kartenreihen</p>
-        <h1>Mehrspieler-Partie mit Admin-Steuerung und AI-Spielern</h1>
+        <h1>Kartenlegen Schweizer Art</h1>
         <p className="hero-copy">
           Spieler treten mit Namen bei. Der Administrator startet eine Partie mit 3 oder 4
           Plaetzen. Fehlende Plaetze werden automatisch mit AI gefuellt.
