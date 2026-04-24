@@ -25,7 +25,7 @@ export function HandPanel({
   onPassTurn,
 }: HandPanelProps) {
   return (
-    <section className="panel">
+    <section className="panel hand-panel">
       <div className="section-header">
         <h2>Deine Hand</h2>
         {snapshot?.canFinishEntireHand ? (

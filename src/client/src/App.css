@@ -102,6 +102,10 @@
   grid-column: span 2;
 }
 
+.hand-panel {
+  grid-column: span 2;
+}
+
 .history-panel {
   max-width: 460px;
   justify-self: start;
@@ -406,6 +410,10 @@ input {
   }
 
   .seating-panel {
+    grid-column: auto;
+  }
+
+  .hand-panel {
     grid-column: auto;
   }
 
