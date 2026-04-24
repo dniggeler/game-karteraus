@@ -475,7 +475,7 @@ function App() {
           )}
         </section>
 
-        <section className="panel">
+        <section className="panel history-panel">
           <h2>Zughistorie</h2>
           <div className="history-list">
             {snapshot?.currentRound?.actions.length ? (

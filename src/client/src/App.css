@@ -98,6 +98,11 @@
   padding: 24px;
 }
 
+.history-panel {
+  max-width: 460px;
+  justify-self: start;
+}
+
 .auth-panel {
   grid-column: 1 / -1;
 }
@@ -364,6 +369,10 @@ input {
 @media (max-width: 1024px) {
   .layout-grid {
     grid-template-columns: 1fr;
+  }
+
+  .history-panel {
+    max-width: none;
   }
 
   .hero-panel,
