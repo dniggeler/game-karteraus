@@ -360,7 +360,9 @@ input {
 }
 
 .hand-grid {
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, 140px);
+  justify-content: start;
+  gap: 12px;
 }
 
 .hand-empty-row {
@@ -371,16 +373,19 @@ input {
 }
 
 .card-button {
-  min-height: 92px;
+  width: 140px;
+  min-height: 196px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  text-align: left;
-  background: rgba(24, 31, 56, 0.96);
+  align-items: stretch;
+  justify-content: center;
+  padding: 8px;
+  background: rgba(24, 31, 56, 0.5);
 }
 
-.card-button small {
-  color: #9fb0e5;
+.card-face {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .card-button--selected {
