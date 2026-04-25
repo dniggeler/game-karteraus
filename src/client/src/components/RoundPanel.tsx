@@ -1,5 +1,6 @@
 import { formatRank, formatStatus, formatSuit } from '../gameUi'
-import type { GameSnapshot } from '../types'
+import type { CardView, GameSnapshot } from '../types'
+import { CardFace } from './CardFace'
 
 interface RoundPanelProps {
   snapshot: GameSnapshot | null
@@ -38,9 +39,9 @@ export function RoundPanel({ snapshot, isBusy, onSelectStartRank }: RoundPanelPr
             <h3>{formatSuit(row.suit)}</h3>
             {row.isOpen ? (
               <div className="row-details">
-                <span>Start: {row.startCard?.label}</span>
-                <span>Unten: {row.lowestCard?.label}</span>
-                <span>Oben: {row.highestCard?.label}</span>
+                <RoundCardDetail label="Start:" card={row.startCard} />
+                <RoundCardDetail label="Unten:" card={row.lowestCard} />
+                <RoundCardDetail label="Oben:" card={row.highestCard} />
               </div>
             ) : (
               <p className="muted-copy">Noch nicht eroeffnet</p>
@@ -49,6 +50,19 @@ export function RoundPanel({ snapshot, isBusy, onSelectStartRank }: RoundPanelPr
         )) ?? <p>Es wurde noch keine Runde gestartet.</p>}
       </div>
     </section>
+  )
+}
+
+function RoundCardDetail({ label, card }: { label: string; card: CardView | null }) {
+  return (
+    <div className="round-card-detail">
+      <span>{label}</span>
+      {card ? (
+        <CardFace card={card} className="round-card-preview" />
+      ) : (
+        <span className="muted-copy">-</span>
+      )}
+    </div>
   )
 }
 

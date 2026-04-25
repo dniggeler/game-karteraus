@@ -348,6 +348,18 @@ input {
   gap: 6px;
 }
 
+.round-card-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.round-card-preview {
+  width: 140px;
+  flex: 0 0 auto;
+}
+
 .hand-suit-rows {
   display: grid;
   gap: 18px;
