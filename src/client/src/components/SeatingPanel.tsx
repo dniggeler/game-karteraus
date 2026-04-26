@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react'
-import type { GameSnapshot, SessionState } from '../types'
+import { formatRank, formatStatus, formatSuit, getRankSortIndex, RANK_ORDER } from '../gameUi'
+import type { CardView, GameSnapshot, RowView, SessionState } from '../types'
+import { CardFace } from './CardFace'
 
 interface SeatingPanelProps {
   session: SessionState | null
@@ -8,6 +10,7 @@ interface SeatingPanelProps {
   onStartGame: (targetPlayerCount: number) => void
   onEndGame: () => void
   onResetGame: () => void
+  onSelectStartRank: (rank: string) => void
 }
 
 export function SeatingPanel({
@@ -17,6 +20,7 @@ export function SeatingPanel({
   onStartGame,
   onEndGame,
   onResetGame,
+  onSelectStartRank,
 }: SeatingPanelProps) {
   return (
     <section className="panel seating-panel">
@@ -44,16 +48,44 @@ export function SeatingPanel({
         ) : null}
       </div>
 
+      {snapshot?.canSelectStartRank ? (
+        <div className="message-box action-box">
+          <p>Du bestimmst den Startwert dieser Runde.</p>
+          <div className="button-row">
+            {snapshot.startRankOptions.map((rank) => (
+              <button key={rank} onClick={() => onSelectStartRank(rank)} disabled={isBusy}>
+                {formatRank(rank)}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {snapshot?.players.length ? (
         <div className="round-table">
           <div className="round-table__felt">
-            <span className="round-table__label">Tischmitte</span>
-            <strong>{snapshot.players.length} Spieler</strong>
-            <span className="muted-copy">
-              {snapshot.currentRound
-                ? `Runde ${snapshot.currentRound.number} laeuft`
-                : 'Wartet auf den Spielstart'}
-            </span>
+            {snapshot.currentRound ? (
+              <div className="table-round-layout">
+                <div className="table-round-summary">
+                  <strong>Runde {snapshot.currentRound.number}</strong>
+                  <span className="muted-copy">{formatStatus(snapshot.currentRound.phase)}</span>
+                </div>
+                <div className="table-round-rows">
+                  {snapshot.currentRound.rows.map((row) => (
+                    <div key={row.suit} className="table-round-row">
+                      <span className="table-round-row__label">{formatSuit(row.suit)}</span>
+                      <RoundRowStacks row={row} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                <span className="round-table__label">Tischmitte</span>
+                <strong>{snapshot.players.length} Spieler</strong>
+                <span className="muted-copy">Wartet auf den Spielstart</span>
+              </>
+            )}
           </div>
 
           {snapshot.players.map((player, index) => (
@@ -89,6 +121,77 @@ export function SeatingPanel({
   )
 }
 
+function RoundRowStacks({ row }: { row: RowView }) {
+  const startCard = row.startCard
+  const lowerCards = startCard ? buildStackCards(row.suit, row.lowestCard, startCard, 'lower') : []
+  const upperCards = startCard ? buildStackCards(row.suit, row.highestCard, startCard, 'upper') : []
+
+  return (
+    <div className="table-round-row__stacks">
+      <RoundCardStack cards={lowerCards} />
+      <RoundCardStack cards={startCard ? [startCard] : []} />
+      <RoundCardStack cards={upperCards} />
+    </div>
+  )
+}
+
+function RoundCardStack({ cards }: { cards: CardView[] }) {
+  return cards.length > 0 ? (
+    <div className="round-card-stack">
+      <div className="round-card-stack__cards">
+        {cards.map((card) => (
+          <CardFace key={card.code} card={card} className="round-card-preview" />
+        ))}
+      </div>
+    </div>
+  ) : (
+    <div className="round-card-stack round-card-stack--empty" aria-hidden="true">
+      <div className="round-card-stack__empty" />
+    </div>
+  )
+}
+
+function buildStackCards(
+  suit: string,
+  boundaryCard: CardView | null,
+  startCard: CardView,
+  direction: 'lower' | 'upper',
+) {
+  const startIndex = getRankSortIndex(startCard.rank)
+  const boundaryIndex = boundaryCard ? getRankSortIndex(boundaryCard.rank) : Number.MAX_SAFE_INTEGER
+
+  if (startIndex === Number.MAX_SAFE_INTEGER || boundaryIndex === Number.MAX_SAFE_INTEGER) {
+    return []
+  }
+
+  if (direction === 'lower') {
+    if (boundaryIndex >= startIndex) {
+      return []
+    }
+
+    return RANK_ORDER.slice(boundaryIndex, startIndex)
+      .reverse()
+      .map((rank) => createStackCard(suit, rank))
+  }
+
+  if (boundaryIndex <= startIndex) {
+    return []
+  }
+
+  return RANK_ORDER.slice(startIndex + 1, boundaryIndex + 1).map((rank) =>
+    createStackCard(suit, rank),
+  )
+}
+
+function createStackCard(suit: string, rank: (typeof RANK_ORDER)[number]): CardView {
+  return {
+    code: `${suit}-${rank}`,
+    suit,
+    rank,
+    label: `${formatRank(rank)} ${formatSuit(suit)}`,
+  }
+}
+
 function getSeatStyle(index: number, totalPlayers: number): CSSProperties {
   if (totalPlayers <= 0) {
     return {}
@@ -103,4 +206,3 @@ function getSeatStyle(index: number, totalPlayers: number): CSSProperties {
     top: `${50 + Math.sin(angle) * radius}%`,
   }
 }
-

@@ -7,7 +7,6 @@ import { HandPanel } from './components/HandPanel'
 import { HeroPanel } from './components/HeroPanel'
 import { HistoryPanel } from './components/HistoryPanel'
 import { ResultsPanel } from './components/ResultsPanel'
-import { RoundPanel } from './components/RoundPanel'
 import { SeatingPanel } from './components/SeatingPanel'
 import { getApiBaseUrl } from './config'
 import { SUIT_ORDER, compareCardsByRank } from './gameUi'
@@ -264,8 +263,8 @@ function App() {
           onStartGame={startGame}
           onEndGame={endGame}
           onResetGame={resetGame}
+          onSelectStartRank={selectStartRank}
         />
-        <RoundPanel snapshot={snapshot} isBusy={isBusy} onSelectStartRank={selectStartRank} />
         <HandPanel
           snapshot={snapshot}
           isBusy={isBusy}

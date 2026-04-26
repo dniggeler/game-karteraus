@@ -265,7 +265,7 @@ input {
 
 .round-table {
   position: relative;
-  min-height: 620px;
+  min-height: 760px;
   padding: 36px;
 }
 
@@ -273,7 +273,7 @@ input {
   position: absolute;
   inset: 50% auto auto 50%;
   transform: translate(-50%, -50%);
-  width: min(320px, 55vw);
+  width: min(460px, 68vw);
   aspect-ratio: 1;
   border-radius: 50%;
   border: 1px solid var(--theme-border-soft);
@@ -287,9 +287,9 @@ input {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   text-align: center;
-  padding: 24px;
+  padding: 20px;
 }
 
 .round-table__label {
@@ -337,30 +337,43 @@ input {
   text-align: left;
 }
 
-.row-grid {
-  grid-template-columns: 1fr;
+.table-round-layout {
+  display: grid;
+  gap: 12px;
+  width: 100%;
 }
 
-.row-card h3 {
-  margin-bottom: 12px;
+.table-round-summary {
+  display: grid;
+  gap: 4px;
 }
 
-.round-row-stacks {
+.table-round-row {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.table-round-row__label {
+  color: var(--theme-eyebrow);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.table-round-row__stacks {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 8px;
   align-items: start;
 }
 
 .round-card-stack {
-  display: grid;
-  gap: 10px;
-  justify-items: center;
-}
-
-.round-card-stack__label {
-  color: var(--theme-muted);
-  font-weight: 600;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 84px;
 }
 
 .round-card-stack__cards {
@@ -370,16 +383,16 @@ input {
 }
 
 .round-card-stack__cards > .card-face + .card-face {
-  margin-top: -150px;
+  margin-top: -64px;
 }
 
 .round-card-stack__empty {
-  width: 140px;
-  min-height: 196px;
+  width: 60px;
+  min-height: 84px;
 }
 
 .card-face.round-card-preview {
-  width: 140px;
+  width: 60px;
   height: auto;
   flex: 0 0 auto;
 }
@@ -459,8 +472,12 @@ input {
   }
 
   .round-table {
-    min-height: 700px;
+    min-height: 820px;
     padding: 28px 12px;
+  }
+
+  .round-table__felt {
+    width: min(420px, 82vw);
   }
 
   .round-table__seat {
@@ -469,21 +486,21 @@ input {
 }
 
 @media (max-width: 720px) {
-  .round-row-stacks {
-    gap: 10px;
+  .table-round-row {
+    grid-template-columns: 42px 1fr;
   }
 
   .card-face.round-card-preview {
-    width: 110px;
+    width: 48px;
   }
 
   .round-card-stack__cards > .card-face + .card-face {
-    margin-top: -118px;
+    margin-top: -52px;
   }
 
   .round-card-stack__empty {
-    width: 110px;
-    min-height: 154px;
+    width: 48px;
+    min-height: 68px;
   }
 
   .round-table {
