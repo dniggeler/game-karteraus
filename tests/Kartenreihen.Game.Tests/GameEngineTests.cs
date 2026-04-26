@@ -94,6 +94,43 @@ public class GameEngineTests
     }
 
     [Fact]
+    public void CanPass_IsFalse_WhenSingleCardMoveExists()
+    {
+        var players = CreatePlayers();
+        var round = CreateRound(players, chooserIndex: 0, startRank: CardRank.Eight, currentPlayerIndex: 2);
+        round.Hands["p3"] = [new Card(CardSuit.Hearts, CardRank.Eight)];
+
+        var canPass = GameEngine.CanPass(round, "p3");
+
+        Assert.False(canPass);
+    }
+
+    [Fact]
+    public void ApplyPass_IsRejected_WhenValidMoveExists()
+    {
+        var players = CreatePlayers();
+        var round = CreateRound(players, chooserIndex: 0, startRank: CardRank.Eight, currentPlayerIndex: 2);
+        round.Hands["p3"] = [new Card(CardSuit.Hearts, CardRank.Eight)];
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            GameEngine.ApplyPass(round, players, players[2]));
+
+        Assert.Contains("Passen ist nicht erlaubt", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void CanPass_IsTrue_WhenNoValidMoveExists()
+    {
+        var players = CreatePlayers();
+        var round = CreateRound(players, chooserIndex: 0, startRank: CardRank.Eight, currentPlayerIndex: 2);
+        round.Hands["p3"] = [new Card(CardSuit.Hearts, CardRank.Six)];
+
+        var canPass = GameEngine.CanPass(round, "p3");
+
+        Assert.True(canPass);
+    }
+
+    [Fact]
     public void SelectStartRank_SetsFirstTurnToPlayerRightOfChooser()
     {
         var players = CreatePlayers();

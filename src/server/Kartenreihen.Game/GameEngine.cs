@@ -97,6 +97,24 @@ public static class GameEngine
         return true;
     }
 
+    public static bool CanPass(RoundState round, string playerId)
+    {
+        ArgumentNullException.ThrowIfNull(round);
+        ArgumentException.ThrowIfNullOrEmpty(playerId);
+
+        if (round.Phase != RoundPhase.InProgress || !round.StartRank.HasValue)
+        {
+            return false;
+        }
+
+        if (GetValidSingleCardMoves(round, playerId).Count > 0)
+        {
+            return false;
+        }
+
+        return !CanFinishWithEntireHand(round, playerId, out var orderedCards) || orderedCards.Count == 0;
+    }
+
     public static void SelectStartRank(RoundState round, IReadOnlyList<PlayerSlot> players, PlayerSlot chooser, CardRank rank)
     {
         ArgumentNullException.ThrowIfNull(round);
@@ -132,6 +150,11 @@ public static class GameEngine
         ArgumentNullException.ThrowIfNull(player);
 
         EnsurePlayerTurn(round, players, player);
+
+        if (!CanPass(round, player.Id))
+        {
+            throw new InvalidOperationException("Passen ist nicht erlaubt, solange ein gueltiger Zug moeglich ist.");
+        }
 
         round.Actions.Add(new RoundAction(
             round.Actions.Count + 1,

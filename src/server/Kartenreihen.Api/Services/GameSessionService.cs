@@ -348,6 +348,7 @@ public sealed class GameSessionService(IHubContext<GameHub> hubContext, IOptions
                       activeMatch!.Players[round.CurrentPlayerIndex.Value].Id == viewerPlayer.Id;
         var playableCards = canPlay ? GameEngine.GetValidSingleCardMoves(round!, session.PlayerId).Select(ToCardView).ToList() : [];
         var canFinishEntireHand = canPlay && GameEngine.CanFinishWithEntireHand(round!, session.PlayerId, out _);
+        var canPass = canPlay && GameEngine.CanPass(round!, session.PlayerId);
 
         return new GameSnapshot(
             "player",
@@ -358,7 +359,7 @@ public sealed class GameSessionService(IHubContext<GameHub> hubContext, IOptions
             false,
             canSelectStartRank,
             canPlay,
-            canPlay,
+            canPass,
             canFinishEntireHand,
             BuildPlayerMessage(activeMatch, viewerPlayer),
             session.PlayerId,
