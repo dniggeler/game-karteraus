@@ -302,14 +302,14 @@ input {
 .round-table__seat {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: min(240px, 30vw);
+  width: min(200px, 25vw);
 }
 
 .round-table .player-card {
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  min-height: 124px;
+  min-height: 108px;
   gap: 10px;
 }
 
@@ -321,6 +321,8 @@ input {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-size: 1.15rem;
+  line-height: 1.2;
 }
 
 .player-name__badge {
@@ -441,7 +443,7 @@ input {
   }
 
   .round-table__seat {
-    width: min(220px, 42vw);
+    width: min(190px, 40vw);
   }
 }
 
