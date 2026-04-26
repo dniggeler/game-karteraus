@@ -9,6 +9,7 @@ import { HistoryPanel } from './components/HistoryPanel'
 import { ResultsPanel } from './components/ResultsPanel'
 import { RoundPanel } from './components/RoundPanel'
 import { SeatingPanel } from './components/SeatingPanel'
+import { getApiBaseUrl } from './config'
 import { SUIT_ORDER, compareCardsByRank } from './gameUi'
 import type { CardView, GameSnapshot, SessionState } from './types'
 
@@ -303,10 +304,6 @@ function persistSession(session: SessionState) {
 
 function clearSession() {
   window.localStorage.removeItem(STORAGE_KEY)
-}
-
-function getApiBaseUrl() {
-  return import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5051'
 }
 
 function toMessage(error: unknown) {

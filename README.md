@@ -34,10 +34,39 @@ npm run dev
 ```
 
 Das Frontend erwartet standardmaessig den API-Server unter `http://localhost:5051`.
+Mit `VITE_API_BASE_URL` kann bei Bedarf ein anderer API-Ursprung gesetzt werden.
 
 ## Admin-Zugang
 
-- Standard-Admin-Code: `kartenreihen-admin`
+- Standard-Admin-Code in `src/server/Kartenreihen.Api/appsettings.json`: `admin`
+- Fuer produktive Deployments sollte der Wert per `Game__AdminCode` ueberschrieben werden.
+
+## Deployment
+
+- Der Spielserver haelt den Zustand nur **in-memory**. Fuer einen gemeinsamen Spielraum sollte genau **eine** API-Instanz laufen.
+- `dotnet publish` fuer `src/server/Kartenreihen.Api` baut das React-Frontend mit und legt die Dateien in `wwwroot` des Publish-Outputs ab.
+- In Produktion verwendet das Frontend standardmaessig denselben Ursprung wie die API. Dadurch kann ein einzelner ASP.NET-Dienst sowohl UI als auch API und SignalR ausliefern.
+
+### Publish
+
+```bash
+dotnet publish src/server/Kartenreihen.Api -c Release -o publish/api
+```
+
+### Start des Publish-Outputs
+
+```bash
+Game__AdminCode=ein-geheimer-admin-code dotnet publish/api/Kartenreihen.Api.dll
+```
+
+### Optional: separates Frontend erlauben
+
+Falls das Frontend auf einem anderen Ursprung laeuft, koennen erlaubte Urspruenge per Konfiguration gesetzt werden:
+
+```bash
+Cors__AllowedOrigins__0=https://game.example.com
+Cors__AllowedOrigins__1=https://www.game.example.com
+```
 
 ## Build und Tests
 

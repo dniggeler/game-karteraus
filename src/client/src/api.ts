@@ -1,6 +1,7 @@
 import type { CardView, GameSnapshot, SessionResponse } from './types'
+import { getApiBaseUrl } from './config'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5051'
+const API_BASE_URL = getApiBaseUrl()
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {

@@ -5,6 +5,7 @@ using Kartenreihen.Api.Services;
 using Kartenreihen.Game;
 
 var builder = WebApplication.CreateBuilder(args);
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
 builder.Services.Configure<GameOptions>(builder.Configuration.GetSection("Game"));
 builder.Services.AddOpenApi();
@@ -14,19 +15,28 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("client", policy =>
     {
-        policy
-            .WithOrigins("http://localhost:5173","http://localhost:5174", "http://localhost:5175")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+        policy.AllowAnyHeader().AllowAnyMethod();
+
+        if (allowedOrigins.Length > 0)
+        {
+            policy.WithOrigins(allowedOrigins).AllowCredentials();
+        }
     });
 });
 
 var app = builder.Build();
+var clientAppIndexPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "index.html");
+var hasClientApp = File.Exists(clientAppIndexPath);
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+}
+
+if (hasClientApp)
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
 }
 
 app.UseCors("client");
@@ -79,6 +89,11 @@ app.MapPost("/api/game/pass", async (PassTurnRequest request, GameSessionService
     await ExecuteAsync(() => service.PassAsync(request.PlayerToken)));
 
 app.MapHub<GameHub>("/hubs/game");
+
+if (hasClientApp)
+{
+    app.MapFallbackToFile("index.html");
+}
 
 app.Run();
 

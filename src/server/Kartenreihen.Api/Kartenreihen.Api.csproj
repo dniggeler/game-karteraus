@@ -4,6 +4,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ClientAppRoot>..\..\client\</ClientAppRoot>
+    <ClientBuildOutput>$(ClientAppRoot)dist\</ClientBuildOutput>
+    <BuildClientAppOnPublish Condition="'$(BuildClientAppOnPublish)' == ''">true</BuildClientAppOnPublish>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,5 +16,24 @@
   <ItemGroup>
     <ProjectReference Include="..\Kartenreihen.Game\Kartenreihen.Game.csproj" />
   </ItemGroup>
+
+  <Target
+    Name="InstallClientDependencies"
+    BeforeTargets="PublishClientApp"
+    Condition="'$(BuildClientAppOnPublish)' == 'true' and !Exists('$(ClientAppRoot)node_modules')">
+    <Exec WorkingDirectory="$(ClientAppRoot)" Command="npm install" />
+  </Target>
+
+  <Target Name="PublishClientApp" AfterTargets="ComputeFilesToPublish" Condition="'$(BuildClientAppOnPublish)' == 'true'">
+    <Exec WorkingDirectory="$(ClientAppRoot)" Command="npm run build" />
+
+    <ItemGroup>
+      <ClientDistFiles Include="$(ClientBuildOutput)**\*" />
+      <ResolvedFileToPublish Include="@(ClientDistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+        <RelativePath>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
 
 </Project>
