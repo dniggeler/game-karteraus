@@ -317,12 +317,24 @@ input {
   outline: 2px solid var(--theme-viewer-outline);
 }
 
+.round-table .player-card--current-turn {
+  border-color: rgba(var(--theme-accent-rgb), 0.5);
+  box-shadow:
+    0 0 0 2px rgba(var(--theme-accent-rgb), 0.28),
+    0 18px 34px rgba(0, 0, 0, 0.32);
+  transform: scale(1.03);
+}
+
 .player-name {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 1.15rem;
   line-height: 1.2;
+}
+
+.player-card--current-turn .player-name {
+  font-weight: 800;
 }
 
 .player-name__badge {

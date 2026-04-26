@@ -103,7 +103,9 @@ export function SeatingPanel({
               className="round-table__seat"
               style={getSeatStyle(index, snapshot.players.length)}
             >
-              <article className={`player-card${player.isViewer ? ' player-card--viewer' : ''}`}>
+              <article
+                className={`player-card${player.isViewer ? ' player-card--viewer' : ''}${player.isCurrentTurn ? ' player-card--current-turn' : ''}`}
+              >
                 <div>
                   <strong className="player-name">
                     <span>{player.name}</span>
@@ -117,7 +119,6 @@ export function SeatingPanel({
                 <div className="player-meta">
                   <span>{formatWinCount(winCounts.get(player.id) ?? 0)}</span>
                   <span>{player.cardCount} Karten</span>
-                  {player.isCurrentTurn ? <span>am Zug</span> : null}
                   {player.isStartValueChooser ? <span>waehlt Startwert</span> : null}
                 </div>
               </article>
