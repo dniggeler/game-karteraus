@@ -22,6 +22,15 @@ export function SeatingPanel({
   onResetGame,
   onSelectStartRank,
 }: SeatingPanelProps) {
+  const visibleRows = snapshot?.currentRound?.rows.filter((row) => !isRowCompleted(row)) ?? []
+  const winCounts = new Map<string, number>(
+    (snapshot?.results ?? []).map((result) => [result.winnerPlayerId, 0] as const),
+  )
+
+  for (const result of snapshot?.results ?? []) {
+    winCounts.set(result.winnerPlayerId, (winCounts.get(result.winnerPlayerId) ?? 0) + 1)
+  }
+
   return (
     <section className="panel seating-panel">
       <div className="section-header">
@@ -71,7 +80,7 @@ export function SeatingPanel({
                   <span className="muted-copy">{formatStatus(snapshot.currentRound.phase)}</span>
                 </div>
                 <div className="table-round-rows">
-                  {snapshot.currentRound.rows.map((row) => (
+                  {visibleRows.map((row) => (
                     <div key={row.suit} className="table-round-row">
                       <span className="table-round-row__label">{formatSuit(row.suit)}</span>
                       <RoundRowStacks row={row} />
@@ -106,6 +115,7 @@ export function SeatingPanel({
                   </strong>
                 </div>
                 <div className="player-meta">
+                  <span>{formatWinCount(winCounts.get(player.id) ?? 0)}</span>
                   <span>{player.cardCount} Karten</span>
                   {player.isCurrentTurn ? <span>am Zug</span> : null}
                   {player.isStartValueChooser ? <span>waehlt Startwert</span> : null}
@@ -190,6 +200,14 @@ function createStackCard(suit: string, rank: (typeof RANK_ORDER)[number]): CardV
     rank,
     label: `${formatRank(rank)} ${formatSuit(suit)}`,
   }
+}
+
+function isRowCompleted(row: RowView) {
+  return row.isOpen && row.lowestCard?.rank === 'Six' && row.highestCard?.rank === 'Ace'
+}
+
+function formatWinCount(winCount: number) {
+  return `${winCount} ${winCount === 1 ? 'Sieg' : 'Siege'}`
 }
 
 function getSeatStyle(index: number, totalPlayers: number): CSSProperties {

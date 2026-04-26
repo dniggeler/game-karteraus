@@ -6,7 +6,6 @@ import { AuthPanel } from './components/AuthPanel'
 import { HandPanel } from './components/HandPanel'
 import { HeroPanel } from './components/HeroPanel'
 import { HistoryPanel } from './components/HistoryPanel'
-import { ResultsPanel } from './components/ResultsPanel'
 import { SeatingPanel } from './components/SeatingPanel'
 import { getApiBaseUrl } from './config'
 import { SUIT_ORDER, compareCardsByRank } from './gameUi'
@@ -277,7 +276,6 @@ function App() {
           onPassTurn={passTurn}
         />
         <HistoryPanel currentRound={snapshot?.currentRound ?? null} />
-        <ResultsPanel results={snapshot?.results ?? []} />
       </section>
     </main>
   )
