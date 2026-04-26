@@ -1,5 +1,5 @@
-import { formatRank, formatStatus, formatSuit } from '../gameUi'
-import type { CardView, GameSnapshot } from '../types'
+import { formatRank, formatStatus, formatSuit, getRankSortIndex, RANK_ORDER } from '../gameUi'
+import type { CardView, GameSnapshot, RowView } from '../types'
 import { CardFace } from './CardFace'
 
 interface RoundPanelProps {
@@ -38,11 +38,7 @@ export function RoundPanel({ snapshot, isBusy, onSelectStartRank }: RoundPanelPr
           <article key={row.suit} className="row-card">
             <h3>{formatSuit(row.suit)}</h3>
             {row.isOpen ? (
-              <div className="row-details">
-                <RoundCardDetail label="Start:" card={row.startCard} />
-                <RoundCardDetail label="Unten:" card={row.lowestCard} />
-                <RoundCardDetail label="Oben:" card={row.highestCard} />
-              </div>
+              <RoundRowStacks row={row} />
             ) : (
               <p className="muted-copy">Noch nicht eroeffnet</p>
             )}
@@ -53,16 +49,80 @@ export function RoundPanel({ snapshot, isBusy, onSelectStartRank }: RoundPanelPr
   )
 }
 
-function RoundCardDetail({ label, card }: { label: string; card: CardView | null }) {
+function RoundRowStacks({ row }: { row: RowView }) {
+  const startCard = row.startCard
+
+  if (!startCard) {
+    return <p className="muted-copy">Noch nicht eroeffnet</p>
+  }
+
+  const lowerCards = buildStackCards(row.suit, row.lowestCard, startCard, 'lower')
+  const upperCards = buildStackCards(row.suit, row.highestCard, startCard, 'upper')
+
   return (
-    <div className="round-card-detail">
-      <span>{label}</span>
-      {card ? (
-        <CardFace card={card} className="round-card-preview" />
+    <div className="round-row-stacks">
+      <RoundCardStack label="Unten" cards={lowerCards} />
+      <RoundCardStack label="Start" cards={[startCard]} />
+      <RoundCardStack label="Oben" cards={upperCards} />
+    </div>
+  )
+}
+
+function RoundCardStack({ label, cards }: { label: string; cards: CardView[] }) {
+  return (
+    <div className="round-card-stack">
+      <span className="round-card-stack__label">{label}</span>
+      {cards.length > 0 ? (
+        <div className="round-card-stack__cards">
+          {cards.map((card) => (
+            <CardFace key={card.code} card={card} className="round-card-preview" />
+          ))}
+        </div>
       ) : (
-        <span className="muted-copy">-</span>
+        <div className="round-card-stack__empty" aria-hidden="true" />
       )}
     </div>
   )
+}
+
+function buildStackCards(
+  suit: string,
+  boundaryCard: CardView | null,
+  startCard: CardView,
+  direction: 'lower' | 'upper',
+) {
+  const startIndex = getRankSortIndex(startCard.rank)
+  const boundaryIndex = boundaryCard ? getRankSortIndex(boundaryCard.rank) : Number.MAX_SAFE_INTEGER
+
+  if (startIndex === Number.MAX_SAFE_INTEGER || boundaryIndex === Number.MAX_SAFE_INTEGER) {
+    return []
+  }
+
+  if (direction === 'lower') {
+    if (boundaryIndex >= startIndex) {
+      return []
+    }
+
+    return RANK_ORDER.slice(boundaryIndex, startIndex)
+      .reverse()
+      .map((rank) => createStackCard(suit, rank))
+  }
+
+  if (boundaryIndex <= startIndex) {
+    return []
+  }
+
+  return RANK_ORDER.slice(startIndex + 1, boundaryIndex + 1).map((rank) =>
+    createStackCard(suit, rank),
+  )
+}
+
+function createStackCard(suit: string, rank: (typeof RANK_ORDER)[number]): CardView {
+  return {
+    code: `${suit}-${rank}`,
+    suit,
+    rank,
+    label: `${formatRank(rank)} ${formatSuit(suit)}`,
+  }
 }
 
