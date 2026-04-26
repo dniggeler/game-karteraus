@@ -355,8 +355,9 @@ input {
   gap: 12px;
 }
 
-.round-card-preview {
-  width: 28px;
+.card-face.round-card-preview {
+  width: 140px;
+  height: auto;
   flex: 0 0 auto;
 }
 
