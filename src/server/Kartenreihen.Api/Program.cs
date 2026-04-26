@@ -49,6 +49,9 @@ app.MapPost("/api/admin/start", async (StartGameRequest request, GameSessionServ
 app.MapPost("/api/admin/end", async (EndGameRequest request, GameSessionService service) =>
     await ExecuteAsync(() => service.EndGameAsync(request.AdminToken)));
 
+app.MapPost("/api/admin/reset", async (ResetGameRequest request, GameSessionService service) =>
+    await ExecuteAsync(() => service.ResetAsync(request.AdminToken)));
+
 app.MapPost("/api/game/start-rank", async (SelectStartRankRequest request, GameSessionService service) =>
 {
     if (!CardRankExtensions.TryParse(request.Rank, out var rank))

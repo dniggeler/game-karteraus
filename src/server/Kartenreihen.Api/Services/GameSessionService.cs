@@ -165,6 +165,21 @@ public sealed class GameSessionService(IHubContext<GameHub> hubContext, IOptions
         return snapshot;
     }
 
+    public async Task<ResetGameResponse> ResetAsync(string adminToken)
+    {
+        lock (_syncRoot)
+        {
+            EnsureAdminToken(adminToken);
+            _humanPlayers.Clear();
+            _adminTokens.Clear();
+            _match = null;
+            _nextAiNumber = 1;
+        }
+
+        await NotifyResetAsync();
+        return new ResetGameResponse(true);
+    }
+
     public async Task<GameSnapshot> SelectStartRankAsync(string playerToken, CardRank rank)
     {
         GameSnapshot snapshot;
@@ -540,6 +555,9 @@ public sealed class GameSessionService(IHubContext<GameHub> hubContext, IOptions
 
     private Task NotifyStateChangedAsync() =>
         hubContext.Clients.Group("game").SendAsync("StateChanged");
+
+    private Task NotifyResetAsync() =>
+        hubContext.Clients.Group("game").SendAsync("Reset");
 
     private sealed record HumanPlayerSession(string PlayerId, string Name, string Token);
 }

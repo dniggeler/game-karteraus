@@ -35,6 +35,14 @@ function App() {
     }
   }
 
+  function logout() {
+    clearSession()
+    setSession(null)
+    setSnapshot(null)
+    setSelectedCards([])
+    setError(null)
+  }
+
   useEffect(() => {
     if (!session) {
       return
@@ -81,6 +89,10 @@ function App() {
 
     connection.on('StateChanged', () => {
       void refreshSnapshot(session)
+    })
+
+    connection.on('Reset', () => {
+      logout()
     })
 
     void connection
@@ -157,6 +169,17 @@ function App() {
     })
   }
 
+  const resetGame = async () => {
+    if (!session || session.role !== 'admin') {
+      return
+    }
+
+    await runAction(async () => {
+      await api.resetGame(session.token)
+      logout()
+    })
+  }
+
   const selectStartRank = async (rank: string) => {
     if (!session || session.role !== 'player') {
       return
@@ -190,14 +213,6 @@ function App() {
       setSnapshot(nextSnapshot)
       setSelectedCards([])
     })
-  }
-
-  const logout = () => {
-    clearSession()
-    setSession(null)
-    setSnapshot(null)
-    setSelectedCards([])
-    setError(null)
   }
 
   const toggleCardSelection = (card: CardView) => {
@@ -247,6 +262,7 @@ function App() {
           isBusy={isBusy}
           onStartGame={startGame}
           onEndGame={endGame}
+          onResetGame={resetGame}
         />
         <RoundPanel snapshot={snapshot} isBusy={isBusy} onSelectStartRank={selectStartRank} />
         <HandPanel

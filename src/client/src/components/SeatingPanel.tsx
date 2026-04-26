@@ -7,6 +7,7 @@ interface SeatingPanelProps {
   isBusy: boolean
   onStartGame: (targetPlayerCount: number) => void
   onEndGame: () => void
+  onResetGame: () => void
 }
 
 export function SeatingPanel({
@@ -15,6 +16,7 @@ export function SeatingPanel({
   isBusy,
   onStartGame,
   onEndGame,
+  onResetGame,
 }: SeatingPanelProps) {
   return (
     <section className="panel seating-panel">
@@ -34,6 +36,9 @@ export function SeatingPanel({
               disabled={isBusy || !snapshot.canEndGame}
             >
               Partie beenden
+            </button>
+            <button className="secondary-button" onClick={onResetGame} disabled={isBusy}>
+              Alles zuruecksetzen
             </button>
           </div>
         ) : null}

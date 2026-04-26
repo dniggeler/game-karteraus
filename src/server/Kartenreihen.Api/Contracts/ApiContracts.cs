@@ -8,6 +8,8 @@ public sealed record StartGameRequest(string AdminToken, int TargetPlayerCount);
 
 public sealed record EndGameRequest(string AdminToken);
 
+public sealed record ResetGameRequest(string AdminToken);
+
 public sealed record SelectStartRankRequest(string PlayerToken, string Rank);
 
 public sealed record PassTurnRequest(string PlayerToken);
@@ -17,6 +19,8 @@ public sealed record PlayCardsRequest(string PlayerToken, IReadOnlyList<CardRequ
 public sealed record CardRequest(string Suit, string Rank);
 
 public sealed record SessionResponse(string Token, GameSnapshot Snapshot);
+
+public sealed record ResetGameResponse(bool Reset);
 
 public sealed record GameSnapshot(
     string ViewerRole,

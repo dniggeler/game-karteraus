@@ -50,6 +50,12 @@ export const api = {
       body: JSON.stringify({ adminToken }),
     }),
 
+  resetGame: (adminToken: string) =>
+    request<{ reset: boolean }>('/api/admin/reset', {
+      method: 'POST',
+      body: JSON.stringify({ adminToken }),
+    }),
+
   selectStartRank: (playerToken: string, rank: string) =>
     request<GameSnapshot>('/api/game/start-rank', {
       method: 'POST',
