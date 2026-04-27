@@ -2,10 +2,12 @@ import type { SessionState } from '../types'
 
 interface HeroPanelProps {
   session: SessionState | null
+  showRules: boolean
   onLogout: () => void
+  onToggleRules: () => void
 }
 
-export function HeroPanel({ session, onLogout }: HeroPanelProps) {
+export function HeroPanel({ session, showRules, onLogout, onToggleRules }: HeroPanelProps) {
   return (
     <header className="hero-panel">
       <div>
@@ -17,6 +19,9 @@ export function HeroPanel({ session, onLogout }: HeroPanelProps) {
         </p>
       </div>
       <div className="hero-actions">
+        <button className="secondary-button" onClick={onToggleRules}>
+          {showRules ? 'Regeln ausblenden' : 'Spielregeln'}
+        </button>
         {session ? (
           <>
             <span className="session-pill">

@@ -86,6 +86,38 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rules-panel {
+  margin-bottom: 24px;
+}
+
+.rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.rules-card {
+  border-radius: 16px;
+  border: 1px solid var(--theme-border-card);
+  background: var(--theme-card-bg);
+  padding: 18px;
+}
+
+.rules-card h3 {
+  margin: 0 0 12px;
+}
+
+.rules-list {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--theme-copy);
+}
+
+.rules-list li + li {
+  margin-top: 8px;
 }
 
 .layout-grid {

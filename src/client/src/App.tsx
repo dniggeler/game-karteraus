@@ -6,6 +6,7 @@ import { AuthPanel } from './components/AuthPanel'
 import { HandPanel } from './components/HandPanel'
 import { HeroPanel } from './components/HeroPanel'
 import { HistoryPanel } from './components/HistoryPanel'
+import { RulesPanel } from './components/RulesPanel'
 import { SeatingPanel } from './components/SeatingPanel'
 import { getApiBaseUrl } from './config'
 import { SUIT_ORDER, compareCardsByRank } from './gameUi'
@@ -21,6 +22,7 @@ function App() {
   const [adminCode, setAdminCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isBusy, setIsBusy] = useState(false)
+  const [showRules, setShowRules] = useState(false)
 
   async function refreshSnapshot(currentSession: SessionState) {
     try {
@@ -239,7 +241,14 @@ function App() {
     <main
       className={`app-shell${session?.role === 'admin' ? ' app-shell--admin' : ' app-shell--player'}`}
     >
-      <HeroPanel session={session} onLogout={logout} />
+      <HeroPanel
+        session={session}
+        showRules={showRules}
+        onLogout={logout}
+        onToggleRules={() => setShowRules((current) => !current)}
+      />
+
+      {showRules ? <RulesPanel /> : null}
 
       {error ? <div className="error-banner">{error}</div> : null}
 
