@@ -409,6 +409,11 @@ input {
   flex: 0 0 auto;
 }
 
+.card-face.round-card-preview--placeholder {
+  filter: grayscale(1) saturate(0.15) brightness(0.9);
+  opacity: 0.62;
+}
+
 .hand-suit-rows {
   display: grid;
   gap: 18px;

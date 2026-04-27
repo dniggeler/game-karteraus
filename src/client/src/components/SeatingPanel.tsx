@@ -22,6 +22,7 @@ export function SeatingPanel({
   onResetGame,
   onSelectStartRank,
 }: SeatingPanelProps) {
+  const currentRound = snapshot?.currentRound ?? null
   const visibleRows = snapshot?.currentRound?.rows.filter((row) => !isRowCompleted(row)) ?? []
   const totalScores = new Map<string, number>(
     snapshot?.players.map((player) => [player.id, 0] as const) ?? [],
@@ -77,17 +78,17 @@ export function SeatingPanel({
       {snapshot?.players.length ? (
         <div className="round-table">
           <div className="round-table__felt">
-            {snapshot.currentRound ? (
+            {currentRound ? (
               <div className="table-round-layout">
                 <div className="table-round-summary">
-                  <strong>Runde {snapshot.currentRound.number}</strong>
-                  <span className="muted-copy">{formatStatus(snapshot.currentRound.phase)}</span>
+                  <strong>Runde {currentRound.number}</strong>
+                  <span className="muted-copy">{formatStatus(currentRound.phase)}</span>
                 </div>
                 <div className="table-round-rows">
                   {visibleRows.map((row) => (
                     <div key={row.suit} className="table-round-row">
                       <span className="table-round-row__label">{formatSuit(row.suit)}</span>
-                      <RoundRowStacks row={row} />
+                      <RoundRowStacks row={row} startRank={currentRound.startRank} />
                     </div>
                   ))}
                 </div>
@@ -136,21 +137,28 @@ export function SeatingPanel({
   )
 }
 
-function RoundRowStacks({ row }: { row: RowView }) {
+function RoundRowStacks({ row, startRank }: { row: RowView; startRank: string | null }) {
   const startCard = row.startCard
   const lowerCards = startCard ? buildStackCards(row.suit, row.lowestCard, startCard, 'lower') : []
   const upperCards = startCard ? buildStackCards(row.suit, row.highestCard, startCard, 'upper') : []
+  const startPlaceholderCard = !startCard ? createPlaceholderStartCard(row.suit, startRank) : null
 
   return (
     <div className="table-round-row__stacks">
       <RoundCardStack cards={lowerCards} />
-      <RoundCardStack cards={startCard ? [startCard] : []} />
+      <RoundCardStack cards={startCard ? [startCard] : []} placeholderCard={startPlaceholderCard} />
       <RoundCardStack cards={upperCards} />
     </div>
   )
 }
 
-function RoundCardStack({ cards }: { cards: CardView[] }) {
+function RoundCardStack({
+  cards,
+  placeholderCard = null,
+}: {
+  cards: CardView[]
+  placeholderCard?: CardView | null
+}) {
   return cards.length > 0 ? (
     <div className="round-card-stack">
       <div className="round-card-stack__cards">
@@ -158,6 +166,10 @@ function RoundCardStack({ cards }: { cards: CardView[] }) {
           <CardFace key={card.code} card={card} className="round-card-preview" />
         ))}
       </div>
+    </div>
+  ) : placeholderCard ? (
+    <div className="round-card-stack" aria-label={`${placeholderCard.label} noch nicht gespielt`}>
+      <CardFace card={placeholderCard} className="round-card-preview round-card-preview--placeholder" />
     </div>
   ) : (
     <div className="round-card-stack round-card-stack--empty" aria-hidden="true">
@@ -205,6 +217,14 @@ function createStackCard(suit: string, rank: (typeof RANK_ORDER)[number]): CardV
     rank,
     label: `${formatRank(rank)} ${formatSuit(suit)}`,
   }
+}
+
+function createPlaceholderStartCard(suit: string, startRank: string | null) {
+  if (!startRank || !RANK_ORDER.includes(startRank as (typeof RANK_ORDER)[number])) {
+    return null
+  }
+
+  return createStackCard(suit, startRank as (typeof RANK_ORDER)[number])
 }
 
 function isRowCompleted(row: RowView) {
