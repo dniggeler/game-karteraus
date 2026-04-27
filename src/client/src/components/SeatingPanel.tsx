@@ -123,7 +123,6 @@ export function SeatingPanel({
                 <div className="player-meta">
                   <span>{formatScore(totalScores.get(player.id) ?? 0)}</span>
                   <span>{formatRankPosition(rankingByPlayerId.get(player.id) ?? rankingByPlayerId.size)}</span>
-                  <span>{player.cardCount} Karten</span>
                   {player.isStartValueChooser ? <span>waehlt Startwert</span> : null}
                 </div>
               </article>
