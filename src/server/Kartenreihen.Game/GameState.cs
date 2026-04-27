@@ -35,7 +35,13 @@ public sealed record RoundResult(
     string WinnerPlayerId,
     string WinnerName,
     CardRank StartRank,
-    int ChooserIndex);
+    int ChooserIndex,
+    IReadOnlyList<PlayerRoundScore> Scores);
+
+public sealed record PlayerRoundScore(
+    string PlayerId,
+    string PlayerName,
+    int RemainingCardCount);
 
 public sealed class SuitRow
 {

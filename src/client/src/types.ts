@@ -78,4 +78,11 @@ export interface RoundResultView {
   winnerPlayerId: string
   winnerName: string
   startRank: string
+  scores: PlayerRoundScoreView[]
+}
+
+export interface PlayerRoundScoreView {
+  playerId: string
+  playerName: string
+  remainingCardCount: number
 }

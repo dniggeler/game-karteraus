@@ -253,7 +253,8 @@ public sealed class GameSessionService(IHubContext<GameHub> hubContext, IOptions
                     winner.Id,
                     winner.Name,
                     round.StartRank ?? CardRank.Six,
-                    round.ChooserIndex));
+                    round.ChooserIndex,
+                    BuildRoundScores(round, _match.Players)));
 
                 var nextChooser = GameEngine.PreviousIndex(round.ChooserIndex, _match.Players.Count);
                 _match.CurrentRound = GameEngine.CreateRound(_match.Players, round.Number + 1, nextChooser, _random);
@@ -473,8 +474,22 @@ public sealed class GameSessionService(IHubContext<GameHub> hubContext, IOptions
                 result.RoundNumber,
                 result.WinnerPlayerId,
                 result.WinnerName,
-                result.StartRank.ToString()))
+                result.StartRank.ToString(),
+                result.Scores
+                    .Select(score => new PlayerRoundScoreView(
+                        score.PlayerId,
+                        score.PlayerName,
+                        score.RemainingCardCount))
+                    .ToList()))
             .ToList() ?? [];
+
+    private static IReadOnlyList<PlayerRoundScore> BuildRoundScores(RoundState round, IReadOnlyList<PlayerSlot> players) =>
+        players
+            .Select(player => new PlayerRoundScore(
+                player.Id,
+                player.Name,
+                round.Hands.TryGetValue(player.Id, out var hand) ? hand.Count : 0))
+            .ToList();
 
     private static string? GetActivePlayerId(MatchState? match)
     {

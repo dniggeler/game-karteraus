@@ -23,13 +23,17 @@ export function SeatingPanel({
   onSelectStartRank,
 }: SeatingPanelProps) {
   const visibleRows = snapshot?.currentRound?.rows.filter((row) => !isRowCompleted(row)) ?? []
-  const winCounts = new Map<string, number>(
-    (snapshot?.results ?? []).map((result) => [result.winnerPlayerId, 0] as const),
+  const totalScores = new Map<string, number>(
+    snapshot?.players.map((player) => [player.id, 0] as const) ?? [],
   )
 
   for (const result of snapshot?.results ?? []) {
-    winCounts.set(result.winnerPlayerId, (winCounts.get(result.winnerPlayerId) ?? 0) + 1)
+    for (const score of result.scores) {
+      totalScores.set(score.playerId, (totalScores.get(score.playerId) ?? 0) + score.remainingCardCount)
+    }
   }
+
+  const rankingByPlayerId = buildRankingMap(snapshot?.players.map((player) => player.id) ?? [], totalScores)
 
   return (
     <section className="panel seating-panel">
@@ -117,7 +121,8 @@ export function SeatingPanel({
                   </strong>
                 </div>
                 <div className="player-meta">
-                  <span>{formatWinCount(winCounts.get(player.id) ?? 0)}</span>
+                  <span>{formatScore(totalScores.get(player.id) ?? 0)}</span>
+                  <span>{formatRankPosition(rankingByPlayerId.get(player.id) ?? rankingByPlayerId.size)}</span>
                   <span>{player.cardCount} Karten</span>
                   {player.isStartValueChooser ? <span>waehlt Startwert</span> : null}
                 </div>
@@ -207,8 +212,25 @@ function isRowCompleted(row: RowView) {
   return row.isOpen && row.lowestCard?.rank === 'Six' && row.highestCard?.rank === 'Ace'
 }
 
-function formatWinCount(winCount: number) {
-  return `${winCount} ${winCount === 1 ? 'Sieg' : 'Siege'}`
+function formatScore(score: number) {
+  return `${score} ${score === 1 ? 'Punkt' : 'Punkte'}`
+}
+
+function formatRankPosition(rank: number) {
+  return `Platz ${rank}`
+}
+
+function buildRankingMap(playerIds: string[], totalScores: Map<string, number>) {
+  const orderedScores = [...new Set(playerIds.map((playerId) => totalScores.get(playerId) ?? 0))].sort(
+    (left, right) => left - right,
+  )
+
+  return new Map(
+    playerIds.map((playerId) => [
+      playerId,
+      orderedScores.indexOf(totalScores.get(playerId) ?? 0) + 1,
+    ] as const),
+  )
 }
 
 function getSeatStyle(index: number, totalPlayers: number): CSSProperties {

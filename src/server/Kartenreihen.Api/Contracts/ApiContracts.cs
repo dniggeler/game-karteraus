@@ -81,4 +81,10 @@ public sealed record RoundResultView(
     int RoundNumber,
     string WinnerPlayerId,
     string WinnerName,
-    string StartRank);
+    string StartRank,
+    IReadOnlyList<PlayerRoundScoreView> Scores);
+
+public sealed record PlayerRoundScoreView(
+    string PlayerId,
+    string PlayerName,
+    int RemainingCardCount);
