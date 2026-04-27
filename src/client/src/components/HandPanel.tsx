@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { CardView, GameSnapshot } from '../types'
 import { CardFace } from './CardFace'
 import { formatSuit } from '../gameUi'
@@ -10,6 +11,7 @@ interface HandPanelProps {
   handRows: Array<{ suit: string; cards: CardView[] }>
   selectedCardCount: number
   onToggleCardSelection: (card: CardView) => void
+  onPlayCard: (card: CardView) => void
   onPlaySelectedCards: () => void
   onPassTurn: () => void
 }
@@ -22,9 +24,42 @@ export function HandPanel({
   handRows,
   selectedCardCount,
   onToggleCardSelection,
+  onPlayCard,
   onPlaySelectedCards,
   onPassTurn,
 }: HandPanelProps) {
+  const pendingClickRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (pendingClickRef.current !== null) {
+        window.clearTimeout(pendingClickRef.current)
+      }
+    }
+  }, [])
+
+  function handleCardClick(card: CardView) {
+    if (pendingClickRef.current !== null) {
+      window.clearTimeout(pendingClickRef.current)
+    }
+
+    pendingClickRef.current = window.setTimeout(() => {
+      pendingClickRef.current = null
+      onToggleCardSelection(card)
+    }, 200)
+  }
+
+  function handleCardDoubleClick(card: CardView, isPlayable: boolean) {
+    if (pendingClickRef.current !== null) {
+      window.clearTimeout(pendingClickRef.current)
+      pendingClickRef.current = null
+    }
+
+    if (isPlayable) {
+      onPlayCard(card)
+    }
+  }
+
   return (
     <section className="panel hand-panel">
       <div className="section-header">
@@ -50,7 +85,8 @@ export function HandPanel({
                         <button
                           key={card.code}
                           className={`card-button${isSelected ? ' card-button--selected' : ''}${isPlayable ? ' card-button--playable' : ''}`}
-                          onClick={() => onToggleCardSelection(card)}
+                          onClick={() => handleCardClick(card)}
+                          onDoubleClick={() => handleCardDoubleClick(card, isPlayable)}
                           disabled={isBusy || !snapshot.canPlay}
                           aria-label={card.label}
                         >

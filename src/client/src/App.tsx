@@ -204,6 +204,18 @@ function App() {
     })
   }
 
+  const playCard = async (card: CardView) => {
+    if (!session || session.role !== 'player' || !snapshot?.canPlay || !playableCardCodes.has(card.code)) {
+      return
+    }
+
+    await runAction(async () => {
+      const nextSnapshot = await api.playCards(session.token, [card])
+      setSnapshot(nextSnapshot)
+      setSelectedCards([])
+    })
+  }
+
   const passTurn = async () => {
     if (!session || session.role !== 'player') {
       return
@@ -281,6 +293,7 @@ function App() {
           handRows={handRows}
           selectedCardCount={selectedCardViews.length}
           onToggleCardSelection={toggleCardSelection}
+          onPlayCard={playCard}
           onPlaySelectedCards={playSelectedCards}
           onPassTurn={passTurn}
         />
