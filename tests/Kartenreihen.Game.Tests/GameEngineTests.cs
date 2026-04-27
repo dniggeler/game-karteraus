@@ -5,6 +5,18 @@ namespace Kartenreihen.Game.Tests;
 public class GameEngineTests
 {
     [Fact]
+    public void CardSuitOrder_MatchesHerzPikKaroKreuz()
+    {
+        var suits = Enum.GetValues<CardSuit>()
+            .OrderBy(suit => suit.GetOrder())
+            .ToArray();
+
+        Assert.Equal(
+            [CardSuit.Hearts, CardSuit.Spades, CardSuit.Diamonds, CardSuit.Clubs],
+            suits);
+    }
+
+    [Fact]
     public void SingleCardMove_OpensNewRow_WhenCardMatchesStartRank()
     {
         var players = CreatePlayers();

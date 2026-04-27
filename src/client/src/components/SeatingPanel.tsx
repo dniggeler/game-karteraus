@@ -105,7 +105,7 @@ export function SeatingPanel({
           {snapshot.players.map((player, index) => (
             <div
               key={player.id}
-              className="round-table__seat"
+              className={`round-table__seat${player.isCurrentTurn ? ' round-table__seat--current-turn' : ''}`}
               style={getSeatStyle(index, snapshot.players.length)}
             >
               <article

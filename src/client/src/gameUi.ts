@@ -1,6 +1,6 @@
 import type { CardView } from './types'
 
-export const SUIT_ORDER = ['Hearts', 'Diamonds', 'Clubs', 'Spades'] as const
+export const SUIT_ORDER = ['Hearts', 'Spades', 'Diamonds', 'Clubs'] as const
 export const RANK_ORDER = [
   'Six',
   'Seven',

@@ -5,9 +5,9 @@ public static class GameEngine
     private static readonly CardSuit[] OrderedSuits =
     [
         CardSuit.Hearts,
+        CardSuit.Spades,
         CardSuit.Diamonds,
-        CardSuit.Clubs,
-        CardSuit.Spades
+        CardSuit.Clubs
     ];
 
     public static RoundState CreateRound(

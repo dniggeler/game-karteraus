@@ -34,9 +34,9 @@ public static class CardSuitExtensions
         suit switch
         {
             CardSuit.Hearts => 0,
-            CardSuit.Diamonds => 1,
-            CardSuit.Clubs => 2,
-            CardSuit.Spades => 3,
+            CardSuit.Spades => 1,
+            CardSuit.Diamonds => 2,
+            CardSuit.Clubs => 3,
             _ => throw new ArgumentOutOfRangeException(nameof(suit), suit, null)
         };
 }

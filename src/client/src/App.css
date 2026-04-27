@@ -335,6 +335,25 @@ input {
   position: absolute;
   transform: translate(-50%, -50%);
   width: min(200px, 25vw);
+  isolation: isolate;
+}
+
+.round-table__seat--current-turn {
+  z-index: 1;
+  animation: current-turn-seat 1.8s ease-in-out infinite;
+}
+
+.round-table__seat--current-turn::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 24px;
+  border: 1px solid rgba(var(--theme-accent-rgb), 0.35);
+  box-shadow: 0 0 0 0 rgba(var(--theme-accent-rgb), 0.28);
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  animation: current-turn-seat-ring 1.8s ease-out infinite;
 }
 
 .round-table .player-card {
@@ -367,6 +386,33 @@ input {
 
 .player-card--current-turn .player-name {
   font-weight: 800;
+}
+
+@keyframes current-turn-seat {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  50% {
+    transform: translate(-50%, calc(-50% - 6px)) scale(1.04);
+  }
+}
+
+@keyframes current-turn-seat-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+
+  25% {
+    opacity: 0.8;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
 }
 
 .player-name__badge {
@@ -462,7 +508,7 @@ input {
 }
 
 .hand-grid {
-  grid-template-columns: repeat(auto-fill, 140px);
+  grid-template-columns: repeat(auto-fill, 120px);
   justify-content: start;
   gap: 12px;
 }
@@ -475,8 +521,8 @@ input {
 }
 
 .card-button {
-  width: 140px;
-  min-height: 196px;
+  width: 120px;
+  min-height: 168px;
   display: flex;
   align-items: stretch;
   justify-content: center;
@@ -566,8 +612,30 @@ input {
     transform: none;
   }
 
+  .round-table__seat--current-turn {
+    animation-name: current-turn-seat-mobile;
+  }
+
   .round-table__felt {
     aspect-ratio: auto;
     min-height: 180px;
+  }
+}
+
+@keyframes current-turn-seat-mobile {
+  0%,
+  100% {
+    transform: none;
+  }
+
+  50% {
+    transform: translateY(-4px) scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .round-table__seat--current-turn,
+  .round-table__seat--current-turn::after {
+    animation: none;
   }
 }
