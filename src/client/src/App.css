@@ -493,24 +493,16 @@ input {
 }
 
 .hand-suit-rows {
-  display: grid;
-  gap: 18px;
+  overflow-x: auto;
   margin-bottom: 16px;
-}
-
-.hand-suit-row {
-  display: grid;
-  gap: 10px;
-}
-
-.hand-suit-title {
-  color: var(--theme-eyebrow);
+  padding-bottom: 8px;
 }
 
 .hand-grid {
-  grid-template-columns: repeat(auto-fill, 120px);
-  justify-content: start;
+  display: flex;
+  flex-wrap: nowrap;
   gap: 12px;
+  width: max-content;
 }
 
 .hand-empty-row {
@@ -521,8 +513,8 @@ input {
 }
 
 .card-button {
-  width: 120px;
-  min-height: 168px;
+  width: 112px;
+  min-height: 125px;
   display: flex;
   align-items: stretch;
   justify-content: center;

@@ -1,13 +1,16 @@
-import type { SessionState } from '../types'
+import type { GameSnapshot, SessionState } from '../types'
 
 interface HeroPanelProps {
   session: SessionState | null
+  snapshot: GameSnapshot | null
   showRules: boolean
   onLogout: () => void
   onToggleRules: () => void
 }
 
-export function HeroPanel({ session, showRules, onLogout, onToggleRules }: HeroPanelProps) {
+export function HeroPanel({ session, snapshot, showRules, onLogout, onToggleRules }: HeroPanelProps) {
+  const viewerName = snapshot?.players.find((player) => player.isViewer)?.name
+
   return (
     <header className="hero-panel">
       <div>
@@ -25,7 +28,7 @@ export function HeroPanel({ session, showRules, onLogout, onToggleRules }: HeroP
         {session ? (
           <>
             <span className="session-pill">
-              {session.role === 'admin' ? 'Admin angemeldet' : 'Spieler angemeldet'}
+              {session.role === 'admin' ? 'Admin angemeldet' : viewerName ?? 'Spieler angemeldet'}
             </span>
             <button className="secondary-button" onClick={onLogout}>
               Abmelden

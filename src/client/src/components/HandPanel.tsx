@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { CardView, GameSnapshot } from '../types'
 import { CardFace } from './CardFace'
-import { formatSuit } from '../gameUi'
 
 interface HandPanelProps {
   snapshot: GameSnapshot | null
@@ -29,6 +28,7 @@ export function HandPanel({
   onPassTurn,
 }: HandPanelProps) {
   const pendingClickRef = useRef<number | null>(null)
+  const handCards = handRows.flatMap((row) => row.cards)
 
   useEffect(() => {
     return () => {
@@ -72,34 +72,29 @@ export function HandPanel({
       {snapshot?.viewerRole === 'player' ? (
         <>
           <div className="hand-suit-rows">
-            {handRows.map((row) => (
-              <section key={row.suit} className="hand-suit-row">
-                <h3 className="hand-suit-title">{formatSuit(row.suit)}</h3>
-                <div className="hand-grid">
-                  {row.cards.length ? (
-                    row.cards.map((card) => {
-                      const isSelected = selectedCards.includes(card.code)
-                      const isPlayable = playableCardCodes.has(card.code)
+            <div className="hand-grid">
+              {handCards.length ? (
+                handCards.map((card) => {
+                  const isSelected = selectedCards.includes(card.code)
+                  const isPlayable = playableCardCodes.has(card.code)
 
-                      return (
-                        <button
-                          key={card.code}
-                          className={`card-button${isSelected ? ' card-button--selected' : ''}${isPlayable ? ' card-button--playable' : ''}`}
-                          onClick={() => handleCardClick(card)}
-                          onDoubleClick={() => handleCardDoubleClick(card, isPlayable)}
-                          disabled={isBusy || !snapshot.canPlay}
-                          aria-label={card.label}
-                        >
-                          <CardFace card={card} />
-                        </button>
-                      )
-                    })
-                  ) : (
-                    <p className="muted-copy hand-empty-row">Keine Karten</p>
-                  )}
-                </div>
-              </section>
-            ))}
+                  return (
+                    <button
+                      key={card.code}
+                      className={`card-button${isSelected ? ' card-button--selected' : ''}${isPlayable ? ' card-button--playable' : ''}`}
+                      onClick={() => handleCardClick(card)}
+                      onDoubleClick={() => handleCardDoubleClick(card, isPlayable)}
+                      disabled={isBusy || !snapshot.canPlay}
+                      aria-label={card.label}
+                    >
+                      <CardFace card={card} />
+                    </button>
+                  )
+                })
+              ) : (
+                <p className="muted-copy hand-empty-row">Keine Karten</p>
+              )}
+            </div>
           </div>
 
           <div className="button-row">

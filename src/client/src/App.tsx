@@ -255,6 +255,7 @@ function App() {
     >
       <HeroPanel
         session={session}
+        snapshot={snapshot}
         showRules={showRules}
         onLogout={logout}
         onToggleRules={() => setShowRules((current) => !current)}
