@@ -1,5 +1,5 @@
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { api } from './api'
 import { AuthPanel } from './components/AuthPanel'
@@ -10,7 +10,7 @@ import { RulesPanel } from './components/RulesPanel'
 import { SeatingPanel } from './components/SeatingPanel'
 import { getApiBaseUrl } from './config'
 import { SUIT_ORDER, compareCardsByRank } from './gameUi'
-import type { CardView, GameSnapshot, SessionState } from './types'
+import type { CardView, GameSnapshot, RoundResultView, SessionState } from './types'
 
 const STORAGE_KEY = 'kartenreihen-session'
 
@@ -23,6 +23,8 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [isBusy, setIsBusy] = useState(false)
   const [showRules, setShowRules] = useState(false)
+  const [winnerSplash, setWinnerSplash] = useState<RoundResultView | null>(null)
+  const lastSeenRoundResultRef = useRef<number | null>(null)
 
   async function refreshSnapshot(currentSession: SessionState) {
     try {
@@ -42,6 +44,8 @@ function App() {
     setSnapshot(null)
     setSelectedCards([])
     setError(null)
+    setWinnerSplash(null)
+    lastSeenRoundResultRef.current = null
   }
 
   useEffect(() => {
@@ -127,6 +131,37 @@ function App() {
       })),
     [snapshot],
   )
+  const latestRoundResult = snapshot?.results[0] ?? null
+
+  useEffect(() => {
+    if (!latestRoundResult) {
+      lastSeenRoundResultRef.current = null
+      setWinnerSplash(null)
+      return
+    }
+
+    if (lastSeenRoundResultRef.current === null) {
+      lastSeenRoundResultRef.current = latestRoundResult.roundNumber
+      return
+    }
+
+    if (latestRoundResult.roundNumber === lastSeenRoundResultRef.current) {
+      return
+    }
+
+    lastSeenRoundResultRef.current = latestRoundResult.roundNumber
+    setWinnerSplash(latestRoundResult)
+
+    const timeoutId = window.setTimeout(() => {
+      setWinnerSplash((current) =>
+        current?.roundNumber === latestRoundResult.roundNumber ? null : current,
+      )
+    }, 900)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [latestRoundResult])
 
   const joinAsPlayer = async () => {
     await runAction(async () => {
@@ -253,6 +288,15 @@ function App() {
     <main
       className={`app-shell${session?.role === 'admin' ? ' app-shell--admin' : ' app-shell--player'}`}
     >
+      {winnerSplash ? (
+        <div className="winner-splash" role="status" aria-live="polite">
+          <div className="winner-splash__content">
+            <span className="winner-splash__eyebrow">Runde {winnerSplash.roundNumber}</span>
+            <strong>{winnerSplash.winnerName} gewinnt</strong>
+          </div>
+        </div>
+      ) : null}
+
       <HeroPanel
         session={session}
         snapshot={snapshot}

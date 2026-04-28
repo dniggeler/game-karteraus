@@ -40,6 +40,41 @@
   --theme-playable: rgba(255, 190, 118, 0.82);
 }
 
+.winner-splash {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 20;
+  animation: winner-splash-fade 2000ms ease forwards;
+}
+
+.winner-splash__content {
+  display: grid;
+  gap: 6px;
+  min-width: min(360px, calc(100vw - 32px));
+  padding: 20px 28px;
+  text-align: center;
+  border-radius: 22px;
+  border: 1px solid rgba(var(--theme-accent-rgb), 0.38);
+  background: linear-gradient(180deg, rgba(16, 20, 38, 0.96), rgba(28, 35, 64, 0.96));
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.38),
+    0 0 0 2px rgba(var(--theme-accent-rgb), 0.18);
+}
+
+.winner-splash__content strong {
+  font-size: clamp(1.4rem, 3.4vw, 2rem);
+}
+
+.winner-splash__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--theme-eyebrow);
+  font-size: 0.8rem;
+}
+
 .hero-panel,
 .panel {
   border: 1px solid var(--theme-border-soft);
@@ -87,6 +122,24 @@
   align-items: flex-start;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+@keyframes winner-splash-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  18%,
+  72% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+  }
 }
 
 .rules-panel {
