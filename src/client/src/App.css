@@ -377,15 +377,30 @@ input {
 }
 
 .player-name {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
+  justify-content: space-between;
+  width: 100%;
   font-size: 1.15rem;
   line-height: 1.2;
 }
 
+.player-name__content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .player-card--current-turn .player-name {
   font-weight: 800;
+}
+
+.player-name__turn-indicator {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 @keyframes current-turn-seat {

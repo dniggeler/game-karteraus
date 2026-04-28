@@ -40,6 +40,7 @@ Mit `VITE_API_BASE_URL` kann bei Bedarf ein anderer API-Ursprung gesetzt werden.
 
 - Standard-Admin-Code in `src/server/Kartenreihen.Api/appsettings.json`: `admin`
 - Fuer produktive Deployments sollte der Wert per `Game__AdminCode` ueberschrieben werden.
+- Die Denkzeit der AI-Spieler kann per `Game__AiMoveDelayMilliseconds` angepasst werden. Standard: `1200`.
 
 ## Deployment
 

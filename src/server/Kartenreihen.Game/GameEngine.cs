@@ -133,7 +133,7 @@ public static class GameEngine
 
         round.StartRank = rank;
         round.Phase = RoundPhase.InProgress;
-        round.CurrentPlayerIndex = PreviousIndex(round.ChooserIndex, players.Count);
+        round.CurrentPlayerIndex = round.ChooserIndex;
         round.Actions.Add(new RoundAction(
             round.Actions.Count + 1,
             "select-start-rank",

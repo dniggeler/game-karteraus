@@ -2,20 +2,27 @@ using Kartenreihen.Api.Contracts;
 using Kartenreihen.Api.Hubs;
 using Kartenreihen.Game;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Kartenreihen.Api.Services;
 
-public sealed class GameSessionService(IHubContext<GameHub> hubContext, IOptions<GameOptions> options)
+public sealed class GameSessionService(
+    IHubContext<GameHub> hubContext,
+    IOptions<GameOptions> options,
+    ILogger<GameSessionService> logger)
 {
     private readonly object _syncRoot = new();
     private readonly string _adminCode = options.Value.AdminCode;
+    private readonly TimeSpan _aiMoveDelay = TimeSpan.FromMilliseconds(Math.Max(1, options.Value.AiMoveDelayMilliseconds));
     private readonly Random _random = new();
     private readonly SimpleAiStrategy _aiStrategy = new();
     private readonly List<HumanPlayerSession> _humanPlayers = [];
     private readonly HashSet<string> _adminTokens = new(StringComparer.Ordinal);
+    private readonly ILogger<GameSessionService> _logger = logger;
     private MatchState? _match;
     private int _nextAiNumber = 1;
+    private bool _isAiAdvanceLoopRunning;
 
     public async Task<SessionResponse> JoinPlayerAsync(string name)
     {
@@ -137,11 +144,11 @@ public sealed class GameSessionService(IHubContext<GameHub> hubContext, IOptions
                 CurrentRound = GameEngine.CreateRound(players, 1, 0, _random)
             };
 
-            AdvanceAiLocked();
             snapshot = BuildAdminSnapshotLocked(adminToken);
         }
 
         await NotifyStateChangedAsync();
+        EnsureAiAdvanceLoopRunning();
         return snapshot;
     }
 
@@ -190,11 +197,11 @@ public sealed class GameSessionService(IHubContext<GameHub> hubContext, IOptions
             var round = GetActiveRound();
 
             GameEngine.SelectStartRank(round, _match!.Players, player, rank);
-            AdvanceAiLocked();
             snapshot = BuildPlayerSnapshotLocked(playerSession);
         }
 
         await NotifyStateChangedAsync();
+        EnsureAiAdvanceLoopRunning();
         return snapshot;
     }
 
@@ -208,11 +215,11 @@ public sealed class GameSessionService(IHubContext<GameHub> hubContext, IOptions
             var round = GetActiveRound();
 
             GameEngine.ApplyPlay(round, _match!.Players, player, cards);
-            AdvanceAiLocked();
             snapshot = BuildPlayerSnapshotLocked(playerSession);
         }
 
         await NotifyStateChangedAsync();
+        EnsureAiAdvanceLoopRunning();
         return snapshot;
     }
 
@@ -226,74 +233,154 @@ public sealed class GameSessionService(IHubContext<GameHub> hubContext, IOptions
             var round = GetActiveRound();
 
             GameEngine.ApplyPass(round, _match!.Players, player);
-            AdvanceAiLocked();
             snapshot = BuildPlayerSnapshotLocked(playerSession);
         }
 
         await NotifyStateChangedAsync();
+        EnsureAiAdvanceLoopRunning();
         return snapshot;
     }
 
-    private void AdvanceAiLocked()
+    private void EnsureAiAdvanceLoopRunning()
+    {
+        lock (_syncRoot)
+        {
+            if (_isAiAdvanceLoopRunning || !CanAdvanceAutomaticallyLocked())
+            {
+                return;
+            }
+
+            _isAiAdvanceLoopRunning = true;
+        }
+
+        _ = Task.Run(RunAiAdvanceLoopAsync);
+    }
+
+    private async Task RunAiAdvanceLoopAsync()
+    {
+        try
+        {
+            while (true)
+            {
+                lock (_syncRoot)
+                {
+                    if (!CanAdvanceAutomaticallyLocked())
+                    {
+                        _isAiAdvanceLoopRunning = false;
+                        return;
+                    }
+                }
+
+                await Task.Delay(_aiMoveDelay);
+
+                lock (_syncRoot)
+                {
+                    if (!AdvanceAutomaticStepLocked())
+                    {
+                        _isAiAdvanceLoopRunning = false;
+                        return;
+                    }
+                }
+
+                await NotifyStateChangedAsync();
+            }
+        }
+        catch (Exception exception)
+        {
+            lock (_syncRoot)
+            {
+                _isAiAdvanceLoopRunning = false;
+            }
+
+            _logger.LogError(exception, "Automatische KI-Zuege konnten nicht abgeschlossen werden.");
+        }
+    }
+
+    private bool CanAdvanceAutomaticallyLocked()
     {
         if (_match?.Status != MatchStatus.Active)
         {
-            return;
+            return false;
         }
 
-        while (true)
+        var round = _match.CurrentRound;
+        if (round is null)
         {
-            var round = _match.CurrentRound ?? throw new InvalidOperationException("Es existiert keine aktuelle Runde.");
-
-            if (round.Phase == RoundPhase.Completed)
-            {
-                var winner = _match.Players.Single(player => player.Id == round.WinnerPlayerId);
-                _match.Results.Add(new RoundResult(
-                    round.Number,
-                    winner.Id,
-                    winner.Name,
-                    round.StartRank ?? CardRank.Six,
-                    round.ChooserIndex,
-                    BuildRoundScores(round, _match.Players)));
-
-                var nextChooser = GameEngine.PreviousIndex(round.ChooserIndex, _match.Players.Count);
-                _match.CurrentRound = GameEngine.CreateRound(_match.Players, round.Number + 1, nextChooser, _random);
-                continue;
-            }
-
-            if (round.Phase == RoundPhase.AwaitingStartValue)
-            {
-                var chooser = _match.Players[round.ChooserIndex];
-                if (chooser.Kind != ParticipantKind.Ai)
-                {
-                    return;
-                }
-
-                var startRank = _aiStrategy.ChooseStartRank(round, chooser);
-                GameEngine.SelectStartRank(round, _match.Players, chooser, startRank);
-                continue;
-            }
-
-            if (!round.CurrentPlayerIndex.HasValue)
-            {
-                return;
-            }
-
-            var currentPlayer = _match.Players[round.CurrentPlayerIndex.Value];
-            if (currentPlayer.Kind != ParticipantKind.Ai)
-            {
-                return;
-            }
-
-            var decision = _aiStrategy.ChooseTurn(round, currentPlayer);
-            if (decision.ShouldPass)
-            {
-                GameEngine.ApplyPass(round, _match.Players, currentPlayer);
-                continue;
-            }
-
-            GameEngine.ApplyPlay(round, _match.Players, currentPlayer, decision.Cards);
+            return false;
         }
+
+        if (round.Phase == RoundPhase.Completed)
+        {
+            return true;
+        }
+
+        if (round.Phase == RoundPhase.AwaitingStartValue)
+        {
+            return _match.Players[round.ChooserIndex].Kind == ParticipantKind.Ai;
+        }
+
+        return round.CurrentPlayerIndex.HasValue &&
+               _match.Players[round.CurrentPlayerIndex.Value].Kind == ParticipantKind.Ai;
+    }
+
+    private bool AdvanceAutomaticStepLocked()
+    {
+        if (_match?.Status != MatchStatus.Active)
+        {
+            return false;
+        }
+
+        var round = _match.CurrentRound ?? throw new InvalidOperationException("Es existiert keine aktuelle Runde.");
+
+        if (round.Phase == RoundPhase.Completed)
+        {
+            var winner = _match.Players.Single(player => player.Id == round.WinnerPlayerId);
+            _match.Results.Add(new RoundResult(
+                round.Number,
+                winner.Id,
+                winner.Name,
+                round.StartRank ?? CardRank.Six,
+                round.ChooserIndex,
+                BuildRoundScores(round, _match.Players)));
+
+            var nextChooser = GameEngine.PreviousIndex(round.ChooserIndex, _match.Players.Count);
+            _match.CurrentRound = GameEngine.CreateRound(_match.Players, round.Number + 1, nextChooser, _random);
+            return true;
+        }
+
+        if (round.Phase == RoundPhase.AwaitingStartValue)
+        {
+            var chooser = _match.Players[round.ChooserIndex];
+            if (chooser.Kind != ParticipantKind.Ai)
+            {
+                return false;
+            }
+
+            var startRank = _aiStrategy.ChooseStartRank(round, chooser);
+            GameEngine.SelectStartRank(round, _match.Players, chooser, startRank);
+            return true;
+        }
+
+        if (!round.CurrentPlayerIndex.HasValue)
+        {
+            return false;
+        }
+
+        var currentPlayer = _match.Players[round.CurrentPlayerIndex.Value];
+        if (currentPlayer.Kind != ParticipantKind.Ai)
+        {
+            return false;
+        }
+
+        var decision = _aiStrategy.ChooseTurn(round, currentPlayer);
+        if (decision.ShouldPass)
+        {
+            GameEngine.ApplyPass(round, _match.Players, currentPlayer);
+            return true;
+        }
+
+        GameEngine.ApplyPlay(round, _match.Players, currentPlayer, decision.Cards);
+        return true;
     }
 
     private HumanPlayerSession GetHumanPlayerSession(string token)

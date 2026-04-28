@@ -113,10 +113,17 @@ export function SeatingPanel({
               >
                 <div>
                   <strong className="player-name">
-                    <span>{player.name}</span>
-                    {player.kind === 'Ai' ? (
-                      <span className="player-name__badge" aria-label="AI-Spieler" title="AI-Spieler">
-                        ✦
+                    <span className="player-name__content">
+                      <span>{player.name}</span>
+                      {player.kind === 'Ai' ? (
+                        <span className="player-name__badge" aria-label="AI-Spieler" title="AI-Spieler">
+                          ✦
+                        </span>
+                      ) : null}
+                    </span>
+                    {player.isCurrentTurn ? (
+                      <span className="player-name__turn-indicator" aria-label="Am Zug" title="Am Zug">
+                        👈
                       </span>
                     ) : null}
                   </strong>

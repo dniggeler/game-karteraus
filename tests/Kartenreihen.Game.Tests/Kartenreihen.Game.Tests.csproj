@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\server\Kartenreihen.Api\Kartenreihen.Api.csproj" />
     <ProjectReference Include="..\..\src\server\Kartenreihen.Game\Kartenreihen.Game.csproj" />
   </ItemGroup>
 

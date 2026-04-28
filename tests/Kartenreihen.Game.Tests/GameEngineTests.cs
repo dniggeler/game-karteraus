@@ -143,7 +143,7 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void SelectStartRank_SetsFirstTurnToPlayerRightOfChooser()
+    public void SelectStartRank_SetsFirstTurnToChooser()
     {
         var players = CreatePlayers();
         var round = GameEngine.CreateRound(players, roundNumber: 1, chooserIndex: 1, random: new Random(123));
@@ -152,7 +152,7 @@ public class GameEngineTests
 
         Assert.Equal(CardRank.Queen, round.StartRank);
         Assert.Equal(RoundPhase.InProgress, round.Phase);
-        Assert.Equal(0, round.CurrentPlayerIndex);
+        Assert.Equal(1, round.CurrentPlayerIndex);
     }
 
     private static List<PlayerSlot> CreatePlayers() =>
