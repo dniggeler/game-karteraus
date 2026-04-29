@@ -25,6 +25,7 @@ function App() {
   const [showRules, setShowRules] = useState(false)
   const [winnerSplash, setWinnerSplash] = useState<RoundResultView | null>(null)
   const lastSeenRoundResultRef = useRef<number | null>(null)
+  const hasWinnerSplashBaselineRef = useRef(false)
 
   async function refreshSnapshot(currentSession: SessionState) {
     try {
@@ -46,6 +47,7 @@ function App() {
     setError(null)
     setWinnerSplash(null)
     lastSeenRoundResultRef.current = null
+    hasWinnerSplashBaselineRef.current = false
   }
 
   useEffect(() => {
@@ -134,14 +136,24 @@ function App() {
   const latestRoundResult = snapshot?.results[0] ?? null
 
   useEffect(() => {
-    if (!latestRoundResult) {
-      lastSeenRoundResultRef.current = null
+    if (session?.role !== 'player') {
       setWinnerSplash(null)
+      lastSeenRoundResultRef.current = latestRoundResult?.roundNumber ?? null
+      hasWinnerSplashBaselineRef.current = false
       return
     }
 
-    if (lastSeenRoundResultRef.current === null) {
-      lastSeenRoundResultRef.current = latestRoundResult.roundNumber
+    if (!snapshot) {
+      return
+    }
+
+    if (!hasWinnerSplashBaselineRef.current) {
+      lastSeenRoundResultRef.current = latestRoundResult?.roundNumber ?? null
+      hasWinnerSplashBaselineRef.current = true
+      return
+    }
+
+    if (!latestRoundResult) {
       return
     }
 
@@ -161,7 +173,7 @@ function App() {
     return () => {
       window.clearTimeout(timeoutId)
     }
-  }, [latestRoundResult])
+  }, [latestRoundResult, session?.role, snapshot])
 
   const joinAsPlayer = async () => {
     await runAction(async () => {
