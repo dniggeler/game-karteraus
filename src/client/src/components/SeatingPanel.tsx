@@ -10,7 +10,6 @@ interface SeatingPanelProps {
   onStartGame: (targetPlayerCount: number) => void
   onEndGame: () => void
   onResetGame: () => void
-  onSelectStartRank: (rank: string) => void
 }
 
 export function SeatingPanel({
@@ -20,7 +19,6 @@ export function SeatingPanel({
   onStartGame,
   onEndGame,
   onResetGame,
-  onSelectStartRank,
 }: SeatingPanelProps) {
   const currentRound = snapshot?.currentRound ?? null
   const visibleRows = snapshot?.currentRound?.rows.filter((row) => !isRowCompleted(row)) ?? []
@@ -61,19 +59,6 @@ export function SeatingPanel({
           </div>
         ) : null}
       </div>
-
-      {snapshot?.canSelectStartRank ? (
-        <div className="message-box action-box">
-          <p>Du bestimmst den Startwert dieser Runde.</p>
-          <div className="button-row">
-            {snapshot.startRankOptions.map((rank) => (
-              <button key={rank} onClick={() => onSelectStartRank(rank)} disabled={isBusy}>
-                {formatRank(rank)}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       {snapshot?.players.length ? (
         <div className="round-table">
@@ -131,7 +116,6 @@ export function SeatingPanel({
                 <div className="player-meta">
                   <span>{formatScore(totalScores.get(player.id) ?? 0)}</span>
                   <span>{formatRankPosition(rankingByPlayerId.get(player.id) ?? rankingByPlayerId.size)}</span>
-                  {player.isStartValueChooser ? <span>waehlt Startwert</span> : null}
                 </div>
               </article>
             </div>

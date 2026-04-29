@@ -20,17 +20,13 @@ public class GameSessionServiceTests
         await service.StartGameAsync(adminSession.Token, 3);
 
         var chooserSnapshot = service.RestorePlayerSession(playerSession.Token).Snapshot;
-        var chosenRank = chooserSnapshot.ViewerHand[0].Rank;
-        var afterRankSelection = await service.SelectStartRankAsync(
-            playerSession.Token,
-            Enum.Parse<CardRank>(chosenRank));
-
-        var playedCard = afterRankSelection.PlayableCards[0];
+        Assert.True(chooserSnapshot.CanPlay);
+        var playedCard = chooserSnapshot.PlayableCards[0];
         var immediateSnapshot = await service.PlayCardsAsync(playerSession.Token, [ToCard(playedCard)]);
 
         var activeAi = immediateSnapshot.Players.Single(player => player.IsCurrentTurn);
         Assert.Equal("Ai", activeAi.Kind);
-        Assert.Equal(2, immediateSnapshot.CurrentRound!.Actions.Count);
+        Assert.Single(immediateSnapshot.CurrentRound!.Actions);
 
         await Task.Delay(80);
 

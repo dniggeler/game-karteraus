@@ -10,8 +10,6 @@ public sealed record EndGameRequest(string AdminToken);
 
 public sealed record ResetGameRequest(string AdminToken);
 
-public sealed record SelectStartRankRequest(string PlayerToken, string Rank);
-
 public sealed record PassTurnRequest(string PlayerToken);
 
 public sealed record PlayCardsRequest(string PlayerToken, IReadOnlyList<CardRequest> Cards);
@@ -29,18 +27,15 @@ public sealed record GameSnapshot(
     int? TargetPlayerCount,
     bool CanStartGame,
     bool CanEndGame,
-    bool CanSelectStartRank,
     bool CanPlay,
     bool CanPass,
     bool CanFinishEntireHand,
     string? Message,
     string? ViewerPlayerId,
     string? ActivePlayerId,
-    string? StartValueChooserPlayerId,
     IReadOnlyList<PlayerView> Players,
     IReadOnlyList<CardView> ViewerHand,
     IReadOnlyList<CardView> PlayableCards,
-    IReadOnlyList<string> StartRankOptions,
     RoundView? CurrentRound,
     IReadOnlyList<RoundResultView> Results);
 
@@ -50,7 +45,6 @@ public sealed record PlayerView(
     string Kind,
     int CardCount,
     bool IsCurrentTurn,
-    bool IsStartValueChooser,
     bool IsViewer);
 
 public sealed record CardView(string Code, string Suit, string Rank, string Label);

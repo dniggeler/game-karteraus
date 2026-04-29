@@ -46,7 +46,6 @@ export function formatStatus(status: string) {
       Lobby: 'Lobby',
       Active: 'Aktiv',
       Completed: 'Beendet',
-      AwaitingStartValue: 'Startwert offen',
       InProgress: 'Laeuft',
     }[status] ?? status
   )

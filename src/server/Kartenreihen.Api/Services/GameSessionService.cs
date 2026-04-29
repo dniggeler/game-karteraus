@@ -187,24 +187,6 @@ public sealed class GameSessionService(
         return new ResetGameResponse(true);
     }
 
-    public async Task<GameSnapshot> SelectStartRankAsync(string playerToken, CardRank rank)
-    {
-        GameSnapshot snapshot;
-        lock (_syncRoot)
-        {
-            var playerSession = GetHumanPlayerSession(playerToken);
-            var player = GetActivePlayerSlot(playerSession.PlayerId);
-            var round = GetActiveRound();
-
-            GameEngine.SelectStartRank(round, _match!.Players, player, rank);
-            snapshot = BuildPlayerSnapshotLocked(playerSession);
-        }
-
-        await NotifyStateChangedAsync();
-        EnsureAiAdvanceLoopRunning();
-        return snapshot;
-    }
-
     public async Task<GameSnapshot> PlayCardsAsync(string playerToken, IReadOnlyList<Card> cards)
     {
         GameSnapshot snapshot;
@@ -314,11 +296,6 @@ public sealed class GameSessionService(
             return true;
         }
 
-        if (round.Phase == RoundPhase.AwaitingStartValue)
-        {
-            return _match.Players[round.ChooserIndex].Kind == ParticipantKind.Ai;
-        }
-
         return round.CurrentPlayerIndex.HasValue &&
                _match.Players[round.CurrentPlayerIndex.Value].Kind == ParticipantKind.Ai;
     }
@@ -345,19 +322,6 @@ public sealed class GameSessionService(
 
             var nextChooser = GameEngine.PreviousIndex(round.ChooserIndex, _match.Players.Count);
             _match.CurrentRound = GameEngine.CreateRound(_match.Players, round.Number + 1, nextChooser, _random);
-            return true;
-        }
-
-        if (round.Phase == RoundPhase.AwaitingStartValue)
-        {
-            var chooser = _match.Players[round.ChooserIndex];
-            if (chooser.Kind != ParticipantKind.Ai)
-            {
-                return false;
-            }
-
-            var startRank = _aiStrategy.ChooseStartRank(round, chooser);
-            GameEngine.SelectStartRank(round, _match.Players, chooser, startRank);
             return true;
         }
 
@@ -427,9 +391,6 @@ public sealed class GameSessionService(
         var viewerHand = isViewerInActiveMatch && round is not null
             ? round.Hands[session.PlayerId].Select(ToCardView).ToList()
             : [];
-        var canSelectStartRank = round?.Phase == RoundPhase.AwaitingStartValue &&
-                                 viewerPlayer is not null &&
-                                 activeMatch!.Players[round.ChooserIndex].Id == viewerPlayer.Id;
         var canPlay = round?.Phase == RoundPhase.InProgress &&
                       viewerPlayer is not null &&
                       round.CurrentPlayerIndex.HasValue &&
@@ -445,18 +406,15 @@ public sealed class GameSessionService(
             activeMatch?.TargetPlayerCount,
             false,
             false,
-            canSelectStartRank,
             canPlay,
             canPass,
             canFinishEntireHand,
             BuildPlayerMessage(activeMatch, viewerPlayer),
             session.PlayerId,
             GetActivePlayerId(activeMatch),
-            GetChooserPlayerId(activeMatch),
             BuildPlayerViews(activeMatch, session.PlayerId),
             viewerHand,
             playableCards,
-            canSelectStartRank ? CardRankExtensions.OrderedRanks.Select(rank => rank.ToString()).ToList() : [],
             BuildRoundView(round),
             BuildResults(activeMatch));
     }
@@ -475,13 +433,10 @@ public sealed class GameSessionService(
             false,
             false,
             false,
-            false,
             BuildAdminMessage(),
             null,
             GetActivePlayerId(_match),
-            GetChooserPlayerId(_match),
             BuildPlayerViews(_match, null),
-            [],
             [],
             [],
             BuildRoundView(_match?.CurrentRound),
@@ -493,7 +448,7 @@ public sealed class GameSessionService(
         if (match is null)
         {
             return _humanPlayers
-                .Select(player => new PlayerView(player.PlayerId, player.Name, ParticipantKind.Human.ToString(), 0, false, false, player.PlayerId == viewerPlayerId))
+                .Select(player => new PlayerView(player.PlayerId, player.Name, ParticipantKind.Human.ToString(), 0, false, player.PlayerId == viewerPlayerId))
                 .ToList();
         }
 
@@ -508,7 +463,6 @@ public sealed class GameSessionService(
                     player.Kind.ToString(),
                     cardCount,
                     round?.CurrentPlayerIndex == index,
-                    round?.ChooserIndex == index && round.Phase == RoundPhase.AwaitingStartValue,
                     player.Id == viewerPlayerId);
             })
             .ToList();
@@ -588,16 +542,6 @@ public sealed class GameSessionService(
         return match.Players[currentPlayerIndex].Id;
     }
 
-    private static string? GetChooserPlayerId(MatchState? match)
-    {
-        if (match?.CurrentRound is null)
-        {
-            return null;
-        }
-
-        return match.Players[match.CurrentRound.ChooserIndex].Id;
-    }
-
     private string BuildPlayerMessage(MatchState? match, PlayerSlot? viewerPlayer)
     {
         if (match is null)
@@ -621,17 +565,14 @@ public sealed class GameSessionService(
             return "Warte auf die erste Runde.";
         }
 
-        if (round.Phase == RoundPhase.AwaitingStartValue && match.Players[round.ChooserIndex].Id == viewerPlayer.Id)
-        {
-            return "Du waehlst jetzt den Startwert fuer die Runde.";
-        }
-
         if (round.Phase == RoundPhase.InProgress && round.CurrentPlayerIndex.HasValue && match.Players[round.CurrentPlayerIndex.Value].Id == viewerPlayer.Id)
         {
-            return "Du bist am Zug.";
+            return round.StartRank.HasValue
+                ? "Du bist am Zug."
+                : "Du beginnst die Runde. Spiele die Startkarte.";
         }
 
-        return "Warte auf deinen Zug.";
+        return round.StartRank.HasValue ? "Warte auf deinen Zug." : "Warte auf die Startkarte.";
     }
 
     private string BuildAdminMessage()

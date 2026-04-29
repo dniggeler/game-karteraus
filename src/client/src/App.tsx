@@ -168,7 +168,7 @@ function App() {
       setWinnerSplash((current) =>
         current?.roundNumber === latestRoundResult.roundNumber ? null : current,
       )
-    }, 900)
+    }, 2000)
 
     return () => {
       window.clearTimeout(timeoutId)
@@ -225,17 +225,6 @@ function App() {
     await runAction(async () => {
       await api.resetGame(session.token)
       logout()
-    })
-  }
-
-  const selectStartRank = async (rank: string) => {
-    if (!session || session.role !== 'player') {
-      return
-    }
-
-    await runAction(async () => {
-      const nextSnapshot = await api.selectStartRank(session.token, rank)
-      setSnapshot(nextSnapshot)
     })
   }
 
@@ -340,7 +329,6 @@ function App() {
           onStartGame={startGame}
           onEndGame={endGame}
           onResetGame={resetGame}
-          onSelectStartRank={selectStartRank}
         />
         <HandPanel
           snapshot={snapshot}

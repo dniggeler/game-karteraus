@@ -143,16 +143,53 @@ public class GameEngineTests
     }
 
     [Fact]
-    public void SelectStartRank_SetsFirstTurnToChooser()
+    public void CreateRound_StartsImmediatelyWithChooserTurn()
     {
         var players = CreatePlayers();
         var round = GameEngine.CreateRound(players, roundNumber: 1, chooserIndex: 1, random: new Random(123));
 
-        GameEngine.SelectStartRank(round, players, players[1], CardRank.Queen);
+        Assert.Equal(RoundPhase.InProgress, round.Phase);
+        Assert.Null(round.StartRank);
+        Assert.Equal(1, round.CurrentPlayerIndex);
+    }
+
+    [Fact]
+    public void FirstPlay_SetsStartRankFromPlayedCard()
+    {
+        var players = CreatePlayers();
+        var round = GameEngine.CreateRound(players, roundNumber: 1, chooserIndex: 1, random: new Random(123));
+        round.Hands["p2"] = [new Card(CardSuit.Hearts, CardRank.Queen)];
+
+        GameEngine.ApplyPlay(round, players, players[1], [new Card(CardSuit.Hearts, CardRank.Queen)]);
 
         Assert.Equal(CardRank.Queen, round.StartRank);
-        Assert.Equal(RoundPhase.InProgress, round.Phase);
-        Assert.Equal(1, round.CurrentPlayerIndex);
+        Assert.Equal(RoundPhase.Completed, round.Phase);
+        Assert.Equal("p2", round.WinnerPlayerId);
+    }
+
+    [Fact]
+    public void OpeningTurn_AllowsFinishingEntireHand_WhenSequenceIsValid()
+    {
+        var players = CreatePlayers();
+        var round = GameEngine.CreateRound(players, roundNumber: 1, chooserIndex: 2, random: new Random(123));
+        round.Hands["p3"] =
+        [
+            new Card(CardSuit.Diamonds, CardRank.Ten),
+            new Card(CardSuit.Clubs, CardRank.Ten)
+        ];
+
+        GameEngine.ApplyPlay(
+            round,
+            players,
+            players[2],
+            [
+                new Card(CardSuit.Clubs, CardRank.Ten),
+                new Card(CardSuit.Diamonds, CardRank.Ten)
+            ]);
+
+        Assert.Equal(CardRank.Ten, round.StartRank);
+        Assert.Equal(RoundPhase.Completed, round.Phase);
+        Assert.Equal("p3", round.WinnerPlayerId);
     }
 
     private static List<PlayerSlot> CreatePlayers() =>

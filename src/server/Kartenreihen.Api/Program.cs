@@ -62,16 +62,6 @@ app.MapPost("/api/admin/end", async (EndGameRequest request, GameSessionService 
 app.MapPost("/api/admin/reset", async (ResetGameRequest request, GameSessionService service) =>
     await ExecuteAsync(() => service.ResetAsync(request.AdminToken)));
 
-app.MapPost("/api/game/start-rank", async (SelectStartRankRequest request, GameSessionService service) =>
-{
-    if (!CardRankExtensions.TryParse(request.Rank, out var rank))
-    {
-        return Results.BadRequest(new { error = "Ungueltiger Startwert." });
-    }
-
-    return await ExecuteAsync(() => service.SelectStartRankAsync(request.PlayerToken, rank));
-});
-
 app.MapPost("/api/game/play", async (PlayCardsRequest request, GameSessionService service) =>
 {
     try

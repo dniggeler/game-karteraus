@@ -57,12 +57,6 @@ export const api = {
       body: JSON.stringify({ adminToken }),
     }),
 
-  selectStartRank: (playerToken: string, rank: string) =>
-    request<GameSnapshot>('/api/game/start-rank', {
-      method: 'POST',
-      body: JSON.stringify({ playerToken, rank }),
-    }),
-
   playCards: (playerToken: string, cards: CardView[]) =>
     request<GameSnapshot>('/api/game/play', {
       method: 'POST',

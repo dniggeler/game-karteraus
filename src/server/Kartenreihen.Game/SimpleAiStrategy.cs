@@ -2,20 +2,6 @@ namespace Kartenreihen.Game;
 
 public sealed class SimpleAiStrategy
 {
-    public CardRank ChooseStartRank(RoundState round, PlayerSlot player)
-    {
-        ArgumentNullException.ThrowIfNull(round);
-        ArgumentNullException.ThrowIfNull(player);
-
-        var hand = round.Hands[player.Id];
-        return hand
-            .GroupBy(card => card.Rank)
-            .OrderByDescending(group => group.Count())
-            .ThenBy(group => (int)group.Key)
-            .Select(group => group.Key)
-            .FirstOrDefault(CardRank.Six);
-    }
-
     public AiDecision ChooseTurn(RoundState round, PlayerSlot player)
     {
         ArgumentNullException.ThrowIfNull(round);

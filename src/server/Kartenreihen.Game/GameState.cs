@@ -15,7 +15,6 @@ public enum MatchStatus
 
 public enum RoundPhase
 {
-    AwaitingStartValue,
     InProgress,
     Completed
 }
@@ -81,7 +80,7 @@ public sealed class RoundState
 
     public required List<RoundAction> Actions { get; init; }
 
-    public RoundPhase Phase { get; set; } = RoundPhase.AwaitingStartValue;
+    public RoundPhase Phase { get; set; } = RoundPhase.InProgress;
 
     public CardRank? StartRank { get; set; }
 

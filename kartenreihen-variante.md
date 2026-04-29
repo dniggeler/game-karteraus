@@ -2,7 +2,7 @@
 
 ## Spielidee
 
-Alle Spieler versuchen, ihre Handkarten moeglichst schnell loszuwerden. Auf dem Tisch entstehen Reihen in den vier Farben des verwendeten Kartenblatts. Jede Runde wird ein Startwert festgelegt, von dem aus die Reihen in beide Richtungen erweitert werden.
+Alle Spieler versuchen, ihre Handkarten moeglichst schnell loszuwerden. Auf dem Tisch entstehen Reihen in den vier Farben des verwendeten Kartenblatts. Die erste ausgespielte Karte einer Runde legt den Startwert fest, von dem aus die Reihen in beide Richtungen erweitert werden.
 
 ## Spieler
 
@@ -21,9 +21,9 @@ Wer als Erster keine Karten mehr auf der Hand hat, gewinnt die Runde.
 ## Vorbereitung
 
 1. Mischt alle 36 Karten.
-2. Zu Beginn jeder Runde waehlt genau ein Spieler den **Startwert** der Runde.
-3. In der ersten Runde hat der Geber dieses Wahlrecht.
-4. Nach jeder Runde wandert das Wahlrecht gegen den Uhrzeigersinn zum naechsten Spieler weiter.
+2. Zu Beginn jeder Runde hat genau ein Spieler das **Eroeffnungsrecht**.
+3. In der ersten Runde hat der Geber dieses Eroeffnungsrecht.
+4. Nach jeder Runde wandert dieses Recht gegen den Uhrzeigersinn zum naechsten Spieler weiter.
 5. Teilt alle Karten gleichmaessig aus:
    - bei 3 Spielern je 12 Karten
    - bei 4 Spielern je 9 Karten
@@ -43,7 +43,7 @@ Die Reihenfolge der Werte lautet immer:
 
 ## Spielablauf
 
-1. Der Spieler rechts vom Geber beginnt.
+1. Der Spieler mit dem Eroeffnungsrecht beginnt.
 2. In seinem Zug darf ein Spieler grundsaetzlich **genau eine** gueltige Karte ausspielen.
 3. Kann oder will ein Spieler keine gueltige Karte spielen, passt er.
 4. Danach ist der naechste Spieler an der Reihe.
@@ -52,15 +52,15 @@ Die Reihenfolge der Werte lautet immer:
 
 Eine Karte darf gespielt werden, wenn eine der folgenden Bedingungen erfuellt ist:
 
-### 1. Eine neue Reihe eroeffnen
+### 1. Die Runde eroeffnen
 
-Ein Spieler darf eine Karte ausspielen, deren Wert dem Startwert entspricht. Damit eroeffnet er die Reihe dieser Farbe.
+Die erste ausgespielte Karte einer Runde bestimmt den Startwert. Mit ihr eroeffnet der startende Spieler die Reihe dieser Farbe.
 
-Beispiel: Ist der Startwert **8**, dann koennen die **8 Herz**, **8 Karo**, **8 Kreuz** oder **8 Pik** jeweils eine neue Reihe beginnen.
+Beispiel: Eroeffnet der erste Spieler die Runde mit der **8 Herz**, dann ist **8** der Startwert dieser Runde.
 
-### 2. Eine bestehende Reihe erweitern
+### 2. Eine neue Reihe eroeffnen oder eine bestehende erweitern
 
-Sobald eine Reihe offen ist, darf nur noch die naechstniedrigere oder naechsthoehere Karte **derselben Farbe** angelegt werden.
+Sobald der Startwert feststeht, darf ein Spieler entweder eine neue Reihe mit einer Karte dieses Werts eroeffnen oder eine bestehende Reihe mit der naechstniedrigeren oder naechsthoeheren Karte **derselben Farbe** erweitern.
 
 Beispiel bei Startwert **8**:
 
@@ -95,7 +95,7 @@ Die Runde endet sofort, sobald ein Spieler seine letzte Handkarte abgelegt hat. 
 
 ## Kurzbeispiel
 
-- Der gewaehlte Startwert ist **10**.
-- Auf den Tisch duerfen zunaechst nur 10er gelegt werden, um Reihen zu eroeffnen.
+- Der erste Spieler legt die **10 Herz** und bestimmt damit **10** als Startwert.
+- Auf den Tisch duerfen danach nur 10er gelegt werden, um weitere Reihen zu eroeffnen.
 - Liegt zum Beispiel bereits die **10 Herz**, dann duerfen an diese Reihe nur die **9 Herz** oder der **Bube Herz** angelegt werden.
 - Hat ein Spieler am Zug als letzte zwei Handkarten die **10 Karo** und die **10 Kreuz**, darf er beide zusammen ausspielen, weil er damit alle verbleibenden Handkarten ablegt.

@@ -44,6 +44,7 @@ public static class GameEngine
         {
             Number = roundNumber,
             ChooserIndex = chooserIndex,
+            CurrentPlayerIndex = chooserIndex,
             Hands = hands,
             Rows = [],
             Actions = []
@@ -58,9 +59,14 @@ public static class GameEngine
         ArgumentNullException.ThrowIfNull(round);
         ArgumentException.ThrowIfNullOrEmpty(playerId);
 
-        if (round.Phase != RoundPhase.InProgress || !round.StartRank.HasValue)
+        if (round.Phase != RoundPhase.InProgress)
         {
             return [];
+        }
+
+        if (!round.StartRank.HasValue)
+        {
+            return round.Hands[playerId].ToList();
         }
 
         return round.Hands[playerId]
@@ -78,7 +84,7 @@ public static class GameEngine
 
         orderedCards = [];
 
-        if (round.Phase != RoundPhase.InProgress || !round.StartRank.HasValue)
+        if (round.Phase != RoundPhase.InProgress)
         {
             return false;
         }
@@ -87,6 +93,29 @@ public static class GameEngine
         var rows = CloneRows(round.Rows);
         var path = new List<Card>(remainingCards.Count);
         var visited = new HashSet<string>(StringComparer.Ordinal);
+
+        if (!round.StartRank.HasValue)
+        {
+            foreach (var firstCard in remainingCards.OrderBy(card => card.Suit.GetOrder()).ThenBy(card => (int)card.Rank))
+            {
+                var nextRows = CloneRows(rows);
+                ApplyCard(nextRows, firstCard.Rank, firstCard);
+
+                var nextRemaining = remainingCards.Where(card => card != firstCard).ToList();
+                path.Add(firstCard);
+
+                if (TryResolvePlayableSequence(nextRemaining, nextRows, firstCard.Rank, path, visited))
+                {
+                    orderedCards = path;
+                    return true;
+                }
+
+                path.Clear();
+                visited.Clear();
+            }
+
+            return false;
+        }
 
         if (!TryResolvePlayableSequence(remainingCards, rows, round.StartRank.Value, path, visited))
         {
@@ -113,34 +142,6 @@ public static class GameEngine
         }
 
         return !CanFinishWithEntireHand(round, playerId, out var orderedCards) || orderedCards.Count == 0;
-    }
-
-    public static void SelectStartRank(RoundState round, IReadOnlyList<PlayerSlot> players, PlayerSlot chooser, CardRank rank)
-    {
-        ArgumentNullException.ThrowIfNull(round);
-        ArgumentNullException.ThrowIfNull(players);
-        ArgumentNullException.ThrowIfNull(chooser);
-
-        if (round.Phase != RoundPhase.AwaitingStartValue)
-        {
-            throw new InvalidOperationException("Der Startwert wurde bereits festgelegt.");
-        }
-
-        if (players[round.ChooserIndex].Id != chooser.Id)
-        {
-            throw new InvalidOperationException("Nur der berechtigte Spieler darf den Startwert waehlen.");
-        }
-
-        round.StartRank = rank;
-        round.Phase = RoundPhase.InProgress;
-        round.CurrentPlayerIndex = round.ChooserIndex;
-        round.Actions.Add(new RoundAction(
-            round.Actions.Count + 1,
-            "select-start-rank",
-            chooser.Id,
-            chooser.Name,
-            $"{chooser.Name} waehlt {rank.GetDisplayName()} als Startwert.",
-            []));
     }
 
     public static void ApplyPass(RoundState round, IReadOnlyList<PlayerSlot> players, PlayerSlot player)
@@ -188,10 +189,11 @@ public static class GameEngine
         }
 
         IReadOnlyList<Card> cardsToPlay;
+        var opensRound = !round.StartRank.HasValue;
         if (selectedCards.Count == 1)
         {
             var candidate = selectedCards[0];
-            if (!IsValidSingleCardMove(round.Rows, round.StartRank!.Value, candidate))
+            if (round.StartRank.HasValue && !IsValidSingleCardMove(round.Rows, round.StartRank.Value, candidate))
             {
                 throw new InvalidOperationException("Diese Karte ist aktuell nicht gueltig spielbar.");
             }
@@ -211,9 +213,12 @@ public static class GameEngine
             }
         }
 
+        var effectiveStartRank = round.StartRank ?? cardsToPlay[0].Rank;
+        round.StartRank ??= effectiveStartRank;
+
         foreach (var card in cardsToPlay)
         {
-            ApplyCard(round.Rows, round.StartRank!.Value, card);
+            ApplyCard(round.Rows, effectiveStartRank, card);
             hand.Remove(card);
         }
 
@@ -223,7 +228,9 @@ public static class GameEngine
             player.Id,
             player.Name,
             cardsToPlay.Count == 1
-                ? $"{player.Name} spielt {cardsToPlay[0].DisplayName}."
+                ? opensRound
+                    ? $"{player.Name} spielt {cardsToPlay[0].DisplayName} und setzt damit den Startwert auf {effectiveStartRank.GetDisplayName()}."
+                    : $"{player.Name} spielt {cardsToPlay[0].DisplayName}."
                 : $"{player.Name} spielt {cardsToPlay.Count} Karten und beendet damit die Runde.",
             cardsToPlay.ToList()));
 
@@ -284,9 +291,9 @@ public static class GameEngine
             throw new InvalidOperationException("Die Runde befindet sich nicht in einem spielbaren Zustand.");
         }
 
-        if (!round.StartRank.HasValue || !round.CurrentPlayerIndex.HasValue)
+        if (!round.CurrentPlayerIndex.HasValue)
         {
-            throw new InvalidOperationException("Die Runde ist noch nicht gestartet.");
+            throw new InvalidOperationException("Die Runde ist aktuell nicht spielbar.");
         }
 
         if (players[round.CurrentPlayerIndex.Value].Id != player.Id)

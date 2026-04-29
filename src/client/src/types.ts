@@ -15,18 +15,15 @@ export interface GameSnapshot {
   targetPlayerCount: number | null
   canStartGame: boolean
   canEndGame: boolean
-  canSelectStartRank: boolean
   canPlay: boolean
   canPass: boolean
   canFinishEntireHand: boolean
   message: string | null
   viewerPlayerId: string | null
   activePlayerId: string | null
-  startValueChooserPlayerId: string | null
   players: PlayerView[]
   viewerHand: CardView[]
   playableCards: CardView[]
-  startRankOptions: string[]
   currentRound: RoundView | null
   results: RoundResultView[]
 }
@@ -37,7 +34,6 @@ export interface PlayerView {
   kind: string
   cardCount: number
   isCurrentTurn: boolean
-  isStartValueChooser: boolean
   isViewer: boolean
 }
 
