@@ -342,7 +342,7 @@ function App() {
           onPlaySelectedCards={playSelectedCards}
           onPassTurn={passTurn}
         />
-        <HistoryPanel currentRound={snapshot?.currentRound ?? null} />
+        {session?.role === 'admin' ? <HistoryPanel currentRound={snapshot?.currentRound ?? null} /> : null}
       </section>
     </main>
   )
