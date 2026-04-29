@@ -34,6 +34,7 @@ export interface PlayerView {
   kind: string
   cardCount: number
   isCurrentTurn: boolean
+  isRoundStarter: boolean
   isViewer: boolean
 }
 

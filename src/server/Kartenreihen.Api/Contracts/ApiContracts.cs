@@ -45,6 +45,7 @@ public sealed record PlayerView(
     string Kind,
     int CardCount,
     bool IsCurrentTurn,
+    bool IsRoundStarter,
     bool IsViewer);
 
 public sealed record CardView(string Code, string Suit, string Rank, string Label);

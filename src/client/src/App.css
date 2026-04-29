@@ -488,6 +488,10 @@ input {
   line-height: 1;
 }
 
+.player-name__badge--starter {
+  color: var(--theme-eyebrow);
+}
+
 .player-meta {
   flex-direction: column;
   align-items: flex-start;

@@ -448,7 +448,7 @@ public sealed class GameSessionService(
         if (match is null)
         {
             return _humanPlayers
-                .Select(player => new PlayerView(player.PlayerId, player.Name, ParticipantKind.Human.ToString(), 0, false, player.PlayerId == viewerPlayerId))
+                .Select(player => new PlayerView(player.PlayerId, player.Name, ParticipantKind.Human.ToString(), 0, false, false, player.PlayerId == viewerPlayerId))
                 .ToList();
         }
 
@@ -463,6 +463,7 @@ public sealed class GameSessionService(
                     player.Kind.ToString(),
                     cardCount,
                     round?.CurrentPlayerIndex == index,
+                    round?.StartRank.HasValue == true && round.ChooserIndex == index,
                     player.Id == viewerPlayerId);
             })
             .ToList();

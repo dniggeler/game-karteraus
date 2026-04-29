@@ -100,6 +100,15 @@ export function SeatingPanel({
                   <strong className="player-name">
                     <span className="player-name__content">
                       <span>{player.name}</span>
+                      {player.isRoundStarter ? (
+                        <span
+                          className="player-name__badge player-name__badge--starter"
+                          aria-label="Hat die Runde eroeffnet"
+                          title="Hat die Runde eroeffnet"
+                        >
+                          ⚑
+                        </span>
+                      ) : null}
                       {player.kind === 'Ai' ? (
                         <span className="player-name__badge" aria-label="AI-Spieler" title="AI-Spieler">
                           ✦
