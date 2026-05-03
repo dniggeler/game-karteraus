@@ -301,6 +301,8 @@ input {
   border-radius: 999px;
   background: var(--theme-pill-bg);
   color: var(--theme-pill-text);
+  max-width: 100%;
+  text-wrap: balance;
 }
 
 .error-banner,
@@ -443,6 +445,8 @@ input {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .player-card--current-turn .player-name {
@@ -646,7 +650,7 @@ input {
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .table-round-row {
     grid-template-columns: 42px 1fr;
   }
@@ -685,6 +689,109 @@ input {
   .round-table__felt {
     aspect-ratio: auto;
     min-height: 180px;
+  }
+
+  .hand-suit-rows {
+    overflow-x: visible;
+  }
+
+  .hand-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    gap: 10px;
+    width: 100%;
+  }
+
+  .card-button {
+    width: min(100%, 96px);
+    min-height: 0;
+    aspect-ratio: 140 / 196;
+    justify-self: center;
+    padding: 6px;
+  }
+}
+
+@media (max-width: 560px) {
+  .app-shell {
+    width: min(100% - 24px, 1400px);
+    padding: 20px 0 32px;
+  }
+
+  .hero-panel,
+  .panel {
+    border-radius: 18px;
+  }
+
+  .hero-panel,
+  .panel {
+    padding: 18px;
+  }
+
+  .hero-panel {
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .rules-panel {
+    margin-bottom: 18px;
+  }
+
+  .layout-grid {
+    gap: 16px;
+  }
+
+  .section-header,
+  .button-row {
+    align-items: stretch;
+  }
+
+  .button-row > button,
+  .hero-actions > button {
+    width: 100%;
+  }
+
+  .hero-actions,
+  .session-pill {
+    width: 100%;
+  }
+
+  .player-name {
+    font-size: 1rem;
+  }
+
+  .table-round-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .table-round-row__stacks {
+    gap: 4px;
+  }
+
+  .table-round-row__label {
+    font-size: 0.75rem;
+  }
+
+  .card-face.round-card-preview {
+    width: 42px;
+  }
+
+  .round-card-stack__cards > .card-face + .card-face {
+    margin-top: -46px;
+  }
+
+  .round-card-stack__empty {
+    width: 42px;
+    min-height: 60px;
+  }
+
+  .hand-grid {
+    grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+    gap: 8px;
+  }
+
+  .card-button {
+    width: min(100%, 84px);
   }
 }
 
