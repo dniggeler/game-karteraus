@@ -312,7 +312,7 @@ function App() {
 
       <section className="layout-grid">
         <AuthPanel
-          sessionActive={session !== null}
+          sessionRole={session?.role ?? null}
           snapshot={snapshot}
           playerName={playerName}
           adminCode={adminCode}

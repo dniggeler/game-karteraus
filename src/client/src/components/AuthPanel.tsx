@@ -1,8 +1,8 @@
-import type { GameSnapshot } from '../types'
+import type { GameSnapshot, SessionState } from '../types'
 import { formatStatus } from '../gameUi'
 
 interface AuthPanelProps {
-  sessionActive: boolean
+  sessionRole: SessionState['role'] | null
   snapshot: GameSnapshot | null
   playerName: string
   adminCode: string
@@ -14,7 +14,7 @@ interface AuthPanelProps {
 }
 
 export function AuthPanel({
-  sessionActive,
+  sessionRole,
   snapshot,
   playerName,
   adminCode,
@@ -24,10 +24,14 @@ export function AuthPanel({
   onJoinAsPlayer,
   onLoginAsAdmin,
 }: AuthPanelProps) {
+  if (sessionRole === 'player') {
+    return null
+  }
+
   return (
     <aside className="panel auth-panel">
       <h2>Zugang</h2>
-      {!sessionActive ? (
+      {!sessionRole ? (
         <div className="auth-grid">
           <div className="auth-card">
             <h3>Als Spieler beitreten</h3>
