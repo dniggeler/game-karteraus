@@ -1,12 +1,15 @@
-import type { CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { formatRank, formatStatus, formatSuit, getRankSortIndex, RANK_ORDER } from '../gameUi'
-import type { CardView, GameSnapshot, RowView, SessionState } from '../types'
+import type { AiCardFlightView, CardView, GameSnapshot, RowView, SessionState, TableStackPosition } from '../types'
 import { CardFace } from './CardFace'
 
 interface SeatingPanelProps {
   session: SessionState | null
   snapshot: GameSnapshot | null
+  aiCardFlight: AiCardFlightView | null
+  pendingAiCardFlights: AiCardFlightView[]
   isBusy: boolean
+  onAiCardFlightComplete: () => void
   onStartGame: (targetPlayerCount: number) => void
   onEndGame: () => void
   onResetGame: () => void
@@ -15,11 +18,18 @@ interface SeatingPanelProps {
 export function SeatingPanel({
   session,
   snapshot,
+  aiCardFlight,
+  pendingAiCardFlights,
   isBusy,
+  onAiCardFlightComplete,
   onStartGame,
   onEndGame,
   onResetGame,
 }: SeatingPanelProps) {
+  const roundTableRef = useRef<HTMLDivElement | null>(null)
+  const seatRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const stackRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const [flightOverlay, setFlightOverlay] = useState<FlightOverlay | null>(null)
   const currentRound = snapshot?.currentRound ?? null
   const visibleRows = snapshot?.currentRound?.rows.filter((row) => !isRowCompleted(row)) ?? []
   const totalScores = new Map<string, number>(
@@ -33,6 +43,78 @@ export function SeatingPanel({
   }
 
   const rankingByPlayerId = buildRankingMap(snapshot?.players.map((player) => player.id) ?? [], totalScores)
+  const hiddenCardCodesByStack = useMemo(() => {
+    const entries = pendingAiCardFlights.map((flight) => [getStackId(flight.targetSuit, flight.targetStack), flight.card.code] as const)
+    const hiddenCodes = new Map<string, Set<string>>()
+
+    for (const [stackId, cardCode] of entries) {
+      const codes = hiddenCodes.get(stackId) ?? new Set<string>()
+      codes.add(cardCode)
+      hiddenCodes.set(stackId, codes)
+    }
+
+    return hiddenCodes
+  }, [pendingAiCardFlights])
+
+  useEffect(() => {
+    if (!aiCardFlight) {
+      return
+    }
+
+    const roundTable = roundTableRef.current
+    const sourceSeat = seatRefs.current[aiCardFlight.playerId]
+    const targetStackId = getStackId(aiCardFlight.targetSuit, aiCardFlight.targetStack)
+    const targetStack = stackRefs.current[targetStackId]
+
+    if (!roundTable || !sourceSeat || !targetStack) {
+      onAiCardFlightComplete()
+      return
+    }
+
+    const roundTableRect = roundTable.getBoundingClientRect()
+    const sourceRect = sourceSeat.getBoundingClientRect()
+    const targetRect = targetStack.getBoundingClientRect()
+    const width = Math.max(60, Math.min(92, sourceRect.width * 0.34))
+
+    setFlightOverlay({
+      id: aiCardFlight.id,
+      card: aiCardFlight.card,
+      left: sourceRect.left - roundTableRect.left + sourceRect.width / 2,
+      top: sourceRect.top - roundTableRect.top + Math.min(sourceRect.height * 0.4, 52),
+      width,
+      deltaX:
+        targetRect.left - roundTableRect.left + targetRect.width / 2 - (sourceRect.left - roundTableRect.left + sourceRect.width / 2),
+      deltaY:
+        targetRect.top - roundTableRect.top + Math.min(targetRect.height / 2, 48) - (sourceRect.top - roundTableRect.top + Math.min(sourceRect.height * 0.4, 52)),
+      lift: Math.max(56, Math.min(128, Math.abs(targetRect.top - sourceRect.top) * 0.3 + 42)),
+      targetStackId,
+      isActive: false,
+    })
+
+    const activateTimeoutId = window.setTimeout(() => {
+      setFlightOverlay((currentFlight) =>
+        currentFlight?.id === aiCardFlight.id ? { ...currentFlight, isActive: true } : currentFlight,
+      )
+    }, 16)
+
+    const completeTimeoutId = window.setTimeout(() => {
+      setFlightOverlay((currentFlight) => (currentFlight?.id === aiCardFlight.id ? null : currentFlight))
+      onAiCardFlightComplete()
+    }, AI_CARD_FLIGHT_DURATION_MS)
+
+    return () => {
+      window.clearTimeout(activateTimeoutId)
+      window.clearTimeout(completeTimeoutId)
+    }
+  }, [aiCardFlight, onAiCardFlightComplete])
+
+  useEffect(() => {
+    if (snapshot?.players.length) {
+      return
+    }
+
+    setFlightOverlay(null)
+  }, [snapshot?.players.length])
 
   return (
     <section className="panel seating-panel">
@@ -61,7 +143,7 @@ export function SeatingPanel({
       </div>
 
       {snapshot?.players.length ? (
-        <div className="round-table">
+        <div className="round-table" ref={roundTableRef}>
           <div className="round-table__felt">
             {currentRound ? (
               <div className="table-round-layout">
@@ -73,7 +155,20 @@ export function SeatingPanel({
                   {visibleRows.map((row) => (
                     <div key={row.suit} className="table-round-row">
                       <span className="table-round-row__label">{formatSuit(row.suit)}</span>
-                      <RoundRowStacks row={row} startRank={currentRound.startRank} />
+                      <RoundRowStacks
+                        row={row}
+                        startRank={currentRound.startRank}
+                        flightTargetStackId={flightOverlay?.targetStackId ?? null}
+                        hiddenCardCodesByStack={hiddenCardCodesByStack}
+                        onRegisterStackRef={(stackId, element) => {
+                          if (element) {
+                            stackRefs.current[stackId] = element
+                            return
+                          }
+
+                          delete stackRefs.current[stackId]
+                        }}
+                      />
                     </div>
                   ))}
                 </div>
@@ -91,6 +186,14 @@ export function SeatingPanel({
             <div
               key={player.id}
               className={`round-table__seat${player.isCurrentTurn ? ' round-table__seat--current-turn' : ''}`}
+              ref={(element) => {
+                if (element) {
+                  seatRefs.current[player.id] = element
+                  return
+                }
+
+                delete seatRefs.current[player.id]
+              }}
               style={getSeatStyle(index, snapshot.players.length)}
             >
               <article
@@ -129,6 +232,25 @@ export function SeatingPanel({
               </article>
             </div>
           ))}
+
+          {flightOverlay ? (
+            <div
+              className={`ai-card-flight${flightOverlay.isActive ? ' ai-card-flight--active' : ''}`}
+              style={
+                {
+                  left: `${flightOverlay.left}px`,
+                  top: `${flightOverlay.top}px`,
+                  width: `${flightOverlay.width}px`,
+                  '--ai-flight-delta-x': `${flightOverlay.deltaX}px`,
+                  '--ai-flight-delta-y': `${flightOverlay.deltaY}px`,
+                  '--ai-flight-lift': `${flightOverlay.lift}px`,
+                } as CSSProperties
+              }
+              aria-hidden="true"
+            >
+              <CardFace card={flightOverlay.card} className="round-card-preview" />
+            </div>
+          ) : null}
         </div>
       ) : (
         <p>Noch keine Spieler in der Lobby.</p>
@@ -137,17 +259,56 @@ export function SeatingPanel({
   )
 }
 
-function RoundRowStacks({ row, startRank }: { row: RowView; startRank: string | null }) {
+function RoundRowStacks({
+  row,
+  startRank,
+  flightTargetStackId,
+  hiddenCardCodesByStack,
+  onRegisterStackRef,
+}: {
+  row: RowView
+  startRank: string | null
+  flightTargetStackId: string | null
+  hiddenCardCodesByStack: Map<string, Set<string>>
+  onRegisterStackRef: (stackId: string, element: HTMLDivElement | null) => void
+}) {
   const startCard = row.startCard
-  const lowerCards = startCard ? buildStackCards(row.suit, row.lowestCard, startCard, 'lower') : []
-  const upperCards = startCard ? buildStackCards(row.suit, row.highestCard, startCard, 'upper') : []
-  const startPlaceholderCard = !startCard ? createPlaceholderStartCard(row.suit, startRank) : null
+  const lowerStackId = getStackId(row.suit, 'lower')
+  const startStackId = getStackId(row.suit, 'start')
+  const upperStackId = getStackId(row.suit, 'upper')
+  const lowerCards = filterHiddenCards(
+    startCard ? buildStackCards(row.suit, row.lowestCard, startCard, 'lower') : [],
+    hiddenCardCodesByStack.get(lowerStackId),
+  )
+  const upperCards = filterHiddenCards(
+    startCard ? buildStackCards(row.suit, row.highestCard, startCard, 'upper') : [],
+    hiddenCardCodesByStack.get(upperStackId),
+  )
+  const visibleStartCards = filterHiddenCards(startCard ? [startCard] : [], hiddenCardCodesByStack.get(startStackId))
+  const startPlaceholderCard =
+    !startCard && visibleStartCards.length === 0 ? createPlaceholderStartCard(row.suit, startRank) : null
 
   return (
     <div className="table-round-row__stacks">
-      <RoundCardStack cards={lowerCards} />
-      <RoundCardStack cards={startCard ? [startCard] : []} placeholderCard={startPlaceholderCard} />
-      <RoundCardStack cards={upperCards} />
+      <RoundCardStack
+        cards={lowerCards}
+        stackId={lowerStackId}
+        isFlightTarget={flightTargetStackId === lowerStackId}
+        onRegisterRef={onRegisterStackRef}
+      />
+      <RoundCardStack
+        cards={visibleStartCards}
+        placeholderCard={startPlaceholderCard}
+        stackId={startStackId}
+        isFlightTarget={flightTargetStackId === startStackId}
+        onRegisterRef={onRegisterStackRef}
+      />
+      <RoundCardStack
+        cards={upperCards}
+        stackId={upperStackId}
+        isFlightTarget={flightTargetStackId === upperStackId}
+        onRegisterRef={onRegisterStackRef}
+      />
     </div>
   )
 }
@@ -155,12 +316,21 @@ function RoundRowStacks({ row, startRank }: { row: RowView; startRank: string | 
 function RoundCardStack({
   cards,
   placeholderCard = null,
+  stackId,
+  isFlightTarget,
+  onRegisterRef,
 }: {
   cards: CardView[]
   placeholderCard?: CardView | null
+  stackId: string
+  isFlightTarget: boolean
+  onRegisterRef: (stackId: string, element: HTMLDivElement | null) => void
 }) {
   return cards.length > 0 ? (
-    <div className="round-card-stack">
+    <div
+      className={`round-card-stack${isFlightTarget ? ' round-card-stack--flight-target' : ''}`}
+      ref={(element) => onRegisterRef(stackId, element)}
+    >
       <div className="round-card-stack__cards">
         {cards.map((card) => (
           <CardFace key={card.code} card={card} className="round-card-preview" />
@@ -168,11 +338,19 @@ function RoundCardStack({
       </div>
     </div>
   ) : placeholderCard ? (
-    <div className="round-card-stack" aria-label={`${placeholderCard.label} noch nicht gespielt`}>
+    <div
+      className={`round-card-stack${isFlightTarget ? ' round-card-stack--flight-target' : ''}`}
+      ref={(element) => onRegisterRef(stackId, element)}
+      aria-label={`${placeholderCard.label} noch nicht gespielt`}
+    >
       <CardFace card={placeholderCard} className="round-card-preview round-card-preview--placeholder" />
     </div>
   ) : (
-    <div className="round-card-stack round-card-stack--empty" aria-hidden="true">
+    <div
+      className={`round-card-stack round-card-stack--empty${isFlightTarget ? ' round-card-stack--flight-target' : ''}`}
+      ref={(element) => onRegisterRef(stackId, element)}
+      aria-hidden="true"
+    >
       <div className="round-card-stack__empty" />
     </div>
   )
@@ -227,6 +405,14 @@ function createPlaceholderStartCard(suit: string, startRank: string | null) {
   return createStackCard(suit, startRank as (typeof RANK_ORDER)[number])
 }
 
+function filterHiddenCards(cards: CardView[], hiddenCardCodes: Set<string> | undefined) {
+  if (!hiddenCardCodes?.size) {
+    return cards
+  }
+
+  return cards.filter((card) => !hiddenCardCodes.has(card.code))
+}
+
 function isRowCompleted(row: RowView) {
   return row.isOpen && row.lowestCard?.rank === 'Six' && row.highestCard?.rank === 'Ace'
 }
@@ -266,3 +452,22 @@ function getSeatStyle(index: number, totalPlayers: number): CSSProperties {
     top: `${50 + Math.sin(angle) * radius}%`,
   }
 }
+
+function getStackId(suit: string, stackPosition: TableStackPosition) {
+  return `${suit}:${stackPosition}`
+}
+
+interface FlightOverlay {
+  id: string
+  card: CardView
+  left: number
+  top: number
+  width: number
+  deltaX: number
+  deltaY: number
+  lift: number
+  targetStackId: string
+  isActive: boolean
+}
+
+const AI_CARD_FLIGHT_DURATION_MS = 1100

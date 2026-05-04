@@ -45,6 +45,16 @@ export interface CardView {
   label: string
 }
 
+export type TableStackPosition = 'lower' | 'start' | 'upper'
+
+export interface AiCardFlightView {
+  id: string
+  playerId: string
+  card: CardView
+  targetSuit: string
+  targetStack: TableStackPosition
+}
+
 export interface RowView {
   suit: string
   isOpen: boolean

@@ -549,6 +549,10 @@ input {
   align-items: flex-start;
   justify-content: flex-start;
   min-height: 84px;
+  border-radius: 20px;
+  transition:
+    box-shadow 180ms ease,
+    background-color 180ms ease;
 }
 
 .round-card-stack__cards {
@@ -575,6 +579,58 @@ input {
 .card-face.round-card-preview--placeholder {
   filter: grayscale(1) saturate(0.15) brightness(0.9);
   opacity: 0.62;
+}
+
+.round-card-stack--flight-target {
+  background: rgba(var(--theme-accent-rgb), 0.14);
+  box-shadow:
+    0 0 0 1px rgba(var(--theme-accent-rgb), 0.26),
+    0 0 32px rgba(var(--theme-accent-rgb), 0.22);
+}
+
+.ai-card-flight {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+}
+
+.ai-card-flight .card-face {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.45));
+}
+
+.ai-card-flight--active {
+  animation: ai-card-flight 1100ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes ai-card-flight {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.82);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  68% {
+    opacity: 1;
+    transform:
+      translate(-50%, -50%)
+      translate(calc(var(--ai-flight-delta-x) * 0.72), calc(var(--ai-flight-delta-y) * 0.72 - var(--ai-flight-lift)))
+      scale(1.04);
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(-50%, -50%)
+      translate(var(--ai-flight-delta-x), var(--ai-flight-delta-y))
+      scale(0.76);
+  }
 }
 
 .hand-suit-rows {

@@ -1,5 +1,5 @@
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { api } from './api'
 import { AuthPanel } from './components/AuthPanel'
@@ -9,8 +9,15 @@ import { HistoryPanel } from './components/HistoryPanel'
 import { RulesPanel } from './components/RulesPanel'
 import { SeatingPanel } from './components/SeatingPanel'
 import { getApiBaseUrl } from './config'
-import { SUIT_ORDER, compareCardsByRank } from './gameUi'
-import type { CardView, GameSnapshot, RoundResultView, SessionState } from './types'
+import { SUIT_ORDER, compareCardsByRank, getRankSortIndex } from './gameUi'
+import type {
+  AiCardFlightView,
+  CardView,
+  GameSnapshot,
+  RoundResultView,
+  SessionState,
+  TableStackPosition,
+} from './types'
 
 const LEGACY_STORAGE_KEY = 'kartenreihen-session'
 type StartupPage = SessionState['role']
@@ -26,8 +33,12 @@ function App() {
   const [isBusy, setIsBusy] = useState(false)
   const [showRules, setShowRules] = useState(false)
   const [winnerSplash, setWinnerSplash] = useState<RoundResultView | null>(null)
+  const [aiCardFlightQueue, setAiCardFlightQueue] = useState<AiCardFlightView[]>([])
+  const [activeAiCardFlight, setActiveAiCardFlight] = useState<AiCardFlightView | null>(null)
   const lastSeenRoundResultRef = useRef<number | null>(null)
   const hasWinnerSplashBaselineRef = useRef(false)
+  const lastSeenActionKeyRef = useRef<string | null>(null)
+  const hasAiActionBaselineRef = useRef(false)
 
   useEffect(() => {
     const canonicalPath = getPathForPage(startupPage)
@@ -58,8 +69,12 @@ function App() {
     setSelectedCards([])
     setError(null)
     setWinnerSplash(null)
+    setAiCardFlightQueue([])
+    setActiveAiCardFlight(null)
     lastSeenRoundResultRef.current = null
     hasWinnerSplashBaselineRef.current = false
+    lastSeenActionKeyRef.current = null
+    hasAiActionBaselineRef.current = false
   }
 
   useEffect(() => {
@@ -146,6 +161,67 @@ function App() {
     [snapshot],
   )
   const latestRoundResult = snapshot?.results[0] ?? null
+  const pendingAiCardFlights = useMemo(
+    () => (activeAiCardFlight ? [activeAiCardFlight, ...aiCardFlightQueue] : aiCardFlightQueue),
+    [activeAiCardFlight, aiCardFlightQueue],
+  )
+
+  useEffect(() => {
+    const currentRound = snapshot?.currentRound ?? null
+    if (!currentRound) {
+      setAiCardFlightQueue([])
+      setActiveAiCardFlight(null)
+      lastSeenActionKeyRef.current = null
+      hasAiActionBaselineRef.current = false
+      return
+    }
+
+    const latestAction = currentRound.actions.at(-1) ?? null
+    const latestActionKey = latestAction
+      ? `${currentRound.number}:${latestAction.turnNumber}:${latestAction.playerId}:${latestAction.type}:${latestAction.cards.map((card) => card.code).join(',')}`
+      : `${currentRound.number}:none`
+
+    if (!hasAiActionBaselineRef.current) {
+      lastSeenActionKeyRef.current = latestActionKey
+      hasAiActionBaselineRef.current = true
+      return
+    }
+
+    if (lastSeenActionKeyRef.current === latestActionKey) {
+      return
+    }
+
+    lastSeenActionKeyRef.current = latestActionKey
+
+    if (!latestAction || latestAction.type !== 'play' || latestAction.cards.length === 0) {
+      return
+    }
+
+    const actingPlayer = snapshot?.players.find((player) => player.id === latestAction.playerId)
+    if (actingPlayer?.kind !== 'Ai') {
+      return
+    }
+
+    setAiCardFlightQueue((currentQueue) => [
+      ...currentQueue,
+      ...latestAction.cards.map((card, index) => ({
+        id: `${latestActionKey}:${card.code}:${index}`,
+        playerId: latestAction.playerId,
+        card,
+        targetSuit: card.suit,
+        targetStack: getTargetStackPosition(currentRound, card),
+      })),
+    ])
+  }, [snapshot])
+
+  useEffect(() => {
+    if (activeAiCardFlight || aiCardFlightQueue.length === 0) {
+      return
+    }
+
+    setActiveAiCardFlight(aiCardFlightQueue[0])
+    setAiCardFlightQueue((currentQueue) => currentQueue.slice(1))
+  }, [activeAiCardFlight, aiCardFlightQueue])
 
   useEffect(() => {
     if (session?.role !== 'player') {
@@ -284,6 +360,10 @@ function App() {
     )
   }
 
+  const handleAiCardFlightComplete = useCallback(() => {
+    setActiveAiCardFlight(null)
+  }, [])
+
   async function runAction(action: () => Promise<void>) {
     setIsBusy(true)
     setError(null)
@@ -339,7 +419,10 @@ function App() {
         <SeatingPanel
           session={session}
           snapshot={snapshot}
+          aiCardFlight={activeAiCardFlight}
+          pendingAiCardFlights={pendingAiCardFlights}
           isBusy={isBusy}
+          onAiCardFlightComplete={handleAiCardFlightComplete}
           onStartGame={startGame}
           onEndGame={endGame}
           onResetGame={resetGame}
@@ -412,6 +495,29 @@ function persistSession(session: SessionState, page: StartupPage) {
 
 function clearSession(page: StartupPage) {
   window.localStorage.removeItem(getStorageKey(page))
+}
+
+function getTargetStackPosition(
+  currentRound: NonNullable<GameSnapshot['currentRound']>,
+  card: CardView,
+): TableStackPosition {
+  const row = currentRound.rows.find((candidate) => candidate.suit === card.suit)
+  if (!row?.startCard) {
+    return 'start'
+  }
+
+  const startIndex = getRankSortIndex(row.startCard.rank)
+  const cardIndex = getRankSortIndex(card.rank)
+
+  if (startIndex === Number.MAX_SAFE_INTEGER || cardIndex === Number.MAX_SAFE_INTEGER) {
+    return 'start'
+  }
+
+  if (cardIndex === startIndex) {
+    return 'start'
+  }
+
+  return cardIndex < startIndex ? 'lower' : 'upper'
 }
 
 function toMessage(error: unknown) {
