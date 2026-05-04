@@ -12,10 +12,12 @@ import { getApiBaseUrl } from './config'
 import { SUIT_ORDER, compareCardsByRank } from './gameUi'
 import type { CardView, GameSnapshot, RoundResultView, SessionState } from './types'
 
-const STORAGE_KEY = 'kartenreihen-session'
+const LEGACY_STORAGE_KEY = 'kartenreihen-session'
+type StartupPage = SessionState['role']
 
 function App() {
-  const [session, setSession] = useState<SessionState | null>(loadStoredSession)
+  const startupPage = getStartupPage()
+  const [session, setSession] = useState<SessionState | null>(() => loadStoredSession(startupPage))
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null)
   const [selectedCards, setSelectedCards] = useState<string[]>([])
   const [playerName, setPlayerName] = useState('')
@@ -26,6 +28,16 @@ function App() {
   const [winnerSplash, setWinnerSplash] = useState<RoundResultView | null>(null)
   const lastSeenRoundResultRef = useRef<number | null>(null)
   const hasWinnerSplashBaselineRef = useRef(false)
+
+  useEffect(() => {
+    const canonicalPath = getPathForPage(startupPage)
+
+    if (window.location.pathname !== canonicalPath) {
+      window.history.replaceState({}, '', canonicalPath)
+    }
+
+    document.title = startupPage === 'admin' ? 'Kartenreihen Admin' : 'Kartenreihen Spieler'
+  }, [startupPage])
 
   async function refreshSnapshot(currentSession: SessionState) {
     try {
@@ -40,7 +52,7 @@ function App() {
   }
 
   function logout() {
-    clearSession()
+    clearSession(startupPage)
     setSession(null)
     setSnapshot(null)
     setSelectedCards([])
@@ -69,7 +81,7 @@ function App() {
         }
       } catch (restoreError) {
         if (!isDisposed) {
-          clearSession()
+          clearSession(startupPage)
           setSession(null)
           setSnapshot(null)
           setError(toMessage(restoreError))
@@ -178,7 +190,7 @@ function App() {
   const joinAsPlayer = async () => {
     await runAction(async () => {
       const response = await api.joinPlayer(playerName)
-      persistSession({ role: 'player', token: response.token })
+      persistSession({ role: 'player', token: response.token }, 'player')
       setSession({ role: 'player', token: response.token })
       setSnapshot(response.snapshot)
       setPlayerName('')
@@ -188,7 +200,7 @@ function App() {
   const loginAsAdmin = async () => {
     await runAction(async () => {
       const response = await api.loginAdmin(adminCode)
-      persistSession({ role: 'admin', token: response.token })
+      persistSession({ role: 'admin', token: response.token }, 'admin')
       setSession({ role: 'admin', token: response.token })
       setSnapshot(response.snapshot)
       setAdminCode('')
@@ -287,7 +299,7 @@ function App() {
 
   return (
     <main
-      className={`app-shell${session?.role === 'admin' ? ' app-shell--admin' : ' app-shell--player'}`}
+      className={`app-shell${startupPage === 'admin' ? ' app-shell--admin' : ' app-shell--player'}`}
     >
       {winnerSplash ? (
         <div className="winner-splash" role="status" aria-live="polite">
@@ -299,6 +311,7 @@ function App() {
       ) : null}
 
       <HeroPanel
+        startupPage={startupPage}
         session={session}
         snapshot={snapshot}
         showRules={showRules}
@@ -312,6 +325,7 @@ function App() {
 
       <section className="layout-grid">
         <AuthPanel
+          startupPage={startupPage}
           sessionRole={session?.role ?? null}
           snapshot={snapshot}
           playerName={playerName}
@@ -348,8 +362,20 @@ function App() {
   )
 }
 
-function loadStoredSession(): SessionState | null {
-  const rawValue = window.localStorage.getItem(STORAGE_KEY)
+function getStartupPage(): StartupPage {
+  return window.location.pathname.startsWith('/admin') ? 'admin' : 'player'
+}
+
+function getPathForPage(page: StartupPage) {
+  return page === 'admin' ? '/admin' : '/player'
+}
+
+function getStorageKey(page: StartupPage) {
+  return `${LEGACY_STORAGE_KEY}-${page}`
+}
+
+function readStoredSession(storageKey: string) {
+  const rawValue = window.localStorage.getItem(storageKey)
   if (!rawValue) {
     return null
   }
@@ -357,17 +383,35 @@ function loadStoredSession(): SessionState | null {
   try {
     return JSON.parse(rawValue) as SessionState
   } catch {
-    window.localStorage.removeItem(STORAGE_KEY)
+    window.localStorage.removeItem(storageKey)
     return null
   }
 }
 
-function persistSession(session: SessionState) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
+function loadStoredSession(page: StartupPage): SessionState | null {
+  const pageSession = readStoredSession(getStorageKey(page))
+
+  if (pageSession?.role === page) {
+    return pageSession
+  }
+
+  const legacySession = readStoredSession(LEGACY_STORAGE_KEY)
+
+  if (legacySession?.role !== page) {
+    return null
+  }
+
+  persistSession(legacySession, page)
+  window.localStorage.removeItem(LEGACY_STORAGE_KEY)
+  return legacySession
 }
 
-function clearSession() {
-  window.localStorage.removeItem(STORAGE_KEY)
+function persistSession(session: SessionState, page: StartupPage) {
+  window.localStorage.setItem(getStorageKey(page), JSON.stringify(session))
+}
+
+function clearSession(page: StartupPage) {
+  window.localStorage.removeItem(getStorageKey(page))
 }
 
 function toMessage(error: unknown) {

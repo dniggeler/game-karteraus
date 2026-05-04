@@ -1,6 +1,7 @@
 import type { GameSnapshot, SessionState } from '../types'
 
 interface HeroPanelProps {
+  startupPage: SessionState['role']
   session: SessionState | null
   snapshot: GameSnapshot | null
   showRules: boolean
@@ -8,20 +9,34 @@ interface HeroPanelProps {
   onToggleRules: () => void
 }
 
-export function HeroPanel({ session, snapshot, showRules, onLogout, onToggleRules }: HeroPanelProps) {
+export function HeroPanel({
+  startupPage,
+  session,
+  snapshot,
+  showRules,
+  onLogout,
+  onToggleRules,
+}: HeroPanelProps) {
   const viewerName = snapshot?.players.find((player) => player.isViewer)?.name
+  const switchPageHref = startupPage === 'admin' ? '/player' : '/admin'
+  const switchPageLabel = startupPage === 'admin' ? 'Zur Spielerseite' : 'Zur Adminseite'
+  const eyebrowLabel = startupPage === 'admin' ? 'Kartenreihen · Admin' : 'Kartenreihen · Spieler'
+  const heroCopy =
+    startupPage === 'admin'
+      ? 'Hier meldet sich der Administrator an, startet Partien mit 3 oder 4 Plaetzen und steuert den gemeinsamen Spielraum.'
+      : 'Hier treten Spieler mit Namen bei und spielen in ihrer eigenen Ansicht. Fehlende Plaetze werden automatisch mit AI gefuellt.'
 
   return (
     <header className="hero-panel">
       <div>
-        <p className="eyebrow">Kartenreihen</p>
+        <p className="eyebrow">{eyebrowLabel}</p>
         <h1>Kartenlegen Schweizer Art</h1>
-        <p className="hero-copy">
-          Spieler treten mit Namen bei. Der Administrator startet eine Partie mit 3 oder 4
-          Plaetzen. Fehlende Plaetze werden automatisch mit AI gefuellt.
-        </p>
+        <p className="hero-copy">{heroCopy}</p>
       </div>
       <div className="hero-actions">
+        <a className="button-link secondary-button" href={switchPageHref}>
+          {switchPageLabel}
+        </a>
         <button className="secondary-button" onClick={onToggleRules}>
           {showRules ? 'Regeln ausblenden' : 'Spielregeln'}
         </button>

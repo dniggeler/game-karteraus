@@ -2,6 +2,7 @@ import type { GameSnapshot, SessionState } from '../types'
 import { formatStatus } from '../gameUi'
 
 interface AuthPanelProps {
+  startupPage: SessionState['role']
   sessionRole: SessionState['role'] | null
   snapshot: GameSnapshot | null
   playerName: string
@@ -14,6 +15,7 @@ interface AuthPanelProps {
 }
 
 export function AuthPanel({
+  startupPage,
   sessionRole,
   snapshot,
   playerName,
@@ -30,35 +32,38 @@ export function AuthPanel({
 
   return (
     <aside className="panel auth-panel">
-      <h2>Zugang</h2>
+      <h2>{startupPage === 'admin' ? 'Admin-Zugang' : 'Spielerbeitritt'}</h2>
       {!sessionRole ? (
         <div className="auth-grid">
-          <div className="auth-card">
-            <h3>Als Spieler beitreten</h3>
-            <input
-              value={playerName}
-              onChange={(event) => onPlayerNameChange(event.target.value)}
-              placeholder="Dein Name"
-            />
-            <button onClick={onJoinAsPlayer} disabled={isBusy || playerName.trim().length === 0}>
-              Beitreten
-            </button>
-          </div>
-          <div className="auth-card">
-            <h3>Als Administrator anmelden</h3>
-            <input
-              value={adminCode}
-              onChange={(event) => onAdminCodeChange(event.target.value)}
-              placeholder="Admin-Code"
-              type="password"
-            />
-            <button
-              onClick={onLoginAsAdmin}
-              disabled={isBusy || adminCode.trim().length === 0}
-            >
-              Admin Login
-            </button>
-          </div>
+          {startupPage === 'player' ? (
+            <div className="auth-card">
+              <h3>Als Spieler beitreten</h3>
+              <input
+                value={playerName}
+                onChange={(event) => onPlayerNameChange(event.target.value)}
+                placeholder="Dein Name"
+              />
+              <button onClick={onJoinAsPlayer} disabled={isBusy || playerName.trim().length === 0}>
+                Beitreten
+              </button>
+            </div>
+          ) : (
+            <div className="auth-card">
+              <h3>Als Administrator anmelden</h3>
+              <input
+                value={adminCode}
+                onChange={(event) => onAdminCodeChange(event.target.value)}
+                placeholder="Admin-Code"
+                type="password"
+              />
+              <button
+                onClick={onLoginAsAdmin}
+                disabled={isBusy || adminCode.trim().length === 0}
+              >
+                Admin Login
+              </button>
+            </div>
+          )}
         </div>
       ) : snapshot ? (
         <div className="status-stack">

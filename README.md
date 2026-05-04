@@ -35,10 +35,12 @@ npm run dev
 
 Das Frontend erwartet standardmaessig den API-Server unter `http://localhost:5051`.
 Mit `VITE_API_BASE_URL` kann bei Bedarf ein anderer API-Ursprung gesetzt werden.
+Die Einstiegspunkte sind `http://localhost:5173/player` fuer Spieler und `http://localhost:5173/admin` fuer Administratoren.
 
 ## Admin-Zugang
 
 - Standard-Admin-Code in `src/server/Kartenreihen.Api/appsettings.json`: `admin`
+- Die Admin-Oberflaeche ist unter `/admin` erreichbar, die Spieler-Oberflaeche unter `/player`.
 - Fuer produktive Deployments sollte der Wert per `Game__AdminCode` ueberschrieben werden.
 - Die Denkzeit der AI-Spieler kann per `Game__AiMoveDelayMilliseconds` angepasst werden. Standard: `1200`.
 
