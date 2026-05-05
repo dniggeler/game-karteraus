@@ -125,35 +125,39 @@ export function SeatingPanel({
   }, [snapshot?.players.length])
 
   return (
-    <section className="panel seating-panel">
-      <div className="section-header">
-        {session?.role !== 'player' ? <h2>Lobby und Sitzordnung</h2> : null}
-        <div className="seating-panel__header-side">
-          {rankingEntries.length ? (
-            <RankingPanel entries={rankingEntries} activePlayerId={snapshot?.activePlayerId ?? null} />
-          ) : null}
-          {session?.role === 'admin' && snapshot ? (
-            <div className="button-row">
-              <button onClick={() => onStartGame(3)} disabled={isBusy || !snapshot.canStartGame}>
-                3 Spieler starten
-              </button>
-              <button onClick={() => onStartGame(4)} disabled={isBusy || !snapshot.canStartGame}>
-                4 Spieler starten
-              </button>
-              <button
-                className="secondary-button"
-                onClick={onEndGame}
-                disabled={isBusy || !snapshot.canEndGame}
-              >
-                Partie beenden
-              </button>
-              <button className="secondary-button" onClick={onResetGame} disabled={isBusy}>
-                Alles zuruecksetzen
-              </button>
-            </div>
-          ) : null}
+    <section className={`panel seating-panel${rankingEntries.length ? ' seating-panel--with-ranking' : ''}`}>
+      {rankingEntries.length ? (
+        <div className="seating-panel__floating-ranking">
+          <RankingPanel entries={rankingEntries} activePlayerId={snapshot?.activePlayerId ?? null} />
         </div>
-      </div>
+      ) : null}
+      {session?.role !== 'player' ? (
+        <div className="section-header">
+          <h2>Lobby und Sitzordnung</h2>
+          <div className="seating-panel__header-side">
+            {session?.role === 'admin' && snapshot ? (
+              <div className="button-row">
+                <button onClick={() => onStartGame(3)} disabled={isBusy || !snapshot.canStartGame}>
+                  3 Spieler starten
+                </button>
+                <button onClick={() => onStartGame(4)} disabled={isBusy || !snapshot.canStartGame}>
+                  4 Spieler starten
+                </button>
+                <button
+                  className="secondary-button"
+                  onClick={onEndGame}
+                  disabled={isBusy || !snapshot.canEndGame}
+                >
+                  Partie beenden
+                </button>
+                <button className="secondary-button" onClick={onResetGame} disabled={isBusy}>
+                  Alles zuruecksetzen
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       {snapshot?.players.length ? (
         <div className="round-table" ref={roundTableRef}>

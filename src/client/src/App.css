@@ -185,6 +185,7 @@
 
 .seating-panel {
   grid-column: span 2;
+  position: relative;
 }
 
 .hand-panel {
@@ -248,6 +249,18 @@
 .section-header {
   align-items: center;
   margin-bottom: 18px;
+}
+
+.seating-panel__floating-ranking {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 4;
+  width: min(320px, calc(100% - 48px));
+}
+
+.seating-panel--with-ranking .section-header {
+  padding-right: min(360px, 38vw);
 }
 
 .seating-panel__header-side {
@@ -519,7 +532,8 @@ input {
 .ranking-panel {
   display: grid;
   gap: 10px;
-  min-width: min(320px, 100%);
+  width: 100%;
+  min-width: 0;
   padding: 14px 16px;
   border-radius: 16px;
   border: 1px solid var(--theme-border-card);
@@ -765,6 +779,16 @@ input {
   .seating-panel__header-side {
     width: 100%;
     align-items: stretch;
+  }
+
+  .seating-panel__floating-ranking {
+    position: static;
+    width: 100%;
+    margin-bottom: 18px;
+  }
+
+  .seating-panel--with-ranking .section-header {
+    padding-right: 0;
   }
 
   .round-table {
