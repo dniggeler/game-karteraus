@@ -302,11 +302,11 @@ function RoundRowStacks({
   const startStackId = getStackId(row.suit, 'start')
   const upperStackId = getStackId(row.suit, 'upper')
   const lowerCards = filterHiddenCards(
-    startCard ? buildStackCards(row.suit, row.lowestCard, startCard, 'lower') : [],
+    startCard ? buildBoundaryStackCards(row.lowestCard, startCard, 'lower') : [],
     hiddenCardCodesByStack.get(lowerStackId),
   )
   const upperCards = filterHiddenCards(
-    startCard ? buildStackCards(row.suit, row.highestCard, startCard, 'upper') : [],
+    startCard ? buildBoundaryStackCards(row.highestCard, startCard, 'upper') : [],
     hiddenCardCodesByStack.get(upperStackId),
   )
   const visibleStartCards = filterHiddenCards(startCard ? [startCard] : [], hiddenCardCodesByStack.get(startStackId))
@@ -407,8 +407,7 @@ function RoundCardStack({
   )
 }
 
-function buildStackCards(
-  suit: string,
+function buildBoundaryStackCards(
   boundaryCard: CardView | null,
   startCard: CardView,
   direction: 'lower' | 'upper',
@@ -421,31 +420,10 @@ function buildStackCards(
   }
 
   if (direction === 'lower') {
-    if (boundaryIndex >= startIndex) {
-      return []
-    }
-
-    return RANK_ORDER.slice(boundaryIndex, startIndex)
-      .reverse()
-      .map((rank) => createStackCard(suit, rank))
+    return boundaryIndex < startIndex && boundaryCard ? [boundaryCard] : []
   }
 
-  if (boundaryIndex <= startIndex) {
-    return []
-  }
-
-  return RANK_ORDER.slice(startIndex + 1, boundaryIndex + 1).map((rank) =>
-    createStackCard(suit, rank),
-  )
-}
-
-function createStackCard(suit: string, rank: (typeof RANK_ORDER)[number]): CardView {
-  return {
-    code: `${suit}-${rank}`,
-    suit,
-    rank,
-    label: `${formatRank(rank)} ${formatSuit(suit)}`,
-  }
+  return boundaryIndex > startIndex && boundaryCard ? [boundaryCard] : []
 }
 
 function createPlaceholderStartCard(suit: string, startRank: string | null) {
@@ -453,7 +431,12 @@ function createPlaceholderStartCard(suit: string, startRank: string | null) {
     return null
   }
 
-  return createStackCard(suit, startRank as (typeof RANK_ORDER)[number])
+  return {
+    code: `${suit}-${startRank}`,
+    suit,
+    rank: startRank as (typeof RANK_ORDER)[number],
+    label: `${formatRank(startRank as (typeof RANK_ORDER)[number])} ${formatSuit(suit)}`,
+  }
 }
 
 function filterHiddenCards(cards: CardView[], hiddenCardCodes: Set<string> | undefined) {
