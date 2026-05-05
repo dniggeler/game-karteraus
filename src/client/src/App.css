@@ -496,6 +496,21 @@ input {
   color: var(--theme-eyebrow);
 }
 
+.player-name__last-card {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 10px;
+  background: rgba(9, 12, 24, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(var(--theme-accent-rgb), 0.12);
+}
+
+.card-face.player-name__last-card-face {
+  width: 28px;
+  height: auto;
+  flex: 0 0 auto;
+}
+
 .player-meta {
   flex-direction: column;
   align-items: flex-start;
@@ -814,6 +829,10 @@ input {
 
   .player-name {
     font-size: 1rem;
+  }
+
+  .card-face.player-name__last-card-face {
+    width: 24px;
   }
 
   .table-round-row {

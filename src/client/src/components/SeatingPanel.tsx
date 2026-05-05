@@ -43,6 +43,10 @@ export function SeatingPanel({
   }
 
   const rankingByPlayerId = buildRankingMap(snapshot?.players.map((player) => player.id) ?? [], totalScores)
+  const lastPlayedCardByPlayerId = useMemo(
+    () => buildLastPlayedCardMap(currentRound?.actions ?? []),
+    [currentRound?.actions],
+  )
   const hiddenCardCodesByStack = useMemo(() => {
     const entries = pendingAiCardFlights.map((flight) => [getStackId(flight.targetSuit, flight.targetStack), flight.card.code] as const)
     const hiddenCodes = new Map<string, Set<string>>()
@@ -182,56 +186,69 @@ export function SeatingPanel({
             )}
           </div>
 
-          {snapshot.players.map((player, index) => (
-            <div
-              key={player.id}
-              className={`round-table__seat${player.isCurrentTurn ? ' round-table__seat--current-turn' : ''}`}
-              ref={(element) => {
-                if (element) {
-                  seatRefs.current[player.id] = element
-                  return
-                }
+          {snapshot.players.map((player, index) => {
+            const lastPlayedCard = lastPlayedCardByPlayerId.get(player.id)
 
-                delete seatRefs.current[player.id]
-              }}
-              style={getSeatStyle(index, snapshot.players.length)}
-            >
-              <article
-                className={`player-card${player.isViewer ? ' player-card--viewer' : ''}${player.isCurrentTurn ? ' player-card--current-turn' : ''}`}
+            return (
+              <div
+                key={player.id}
+                className={`round-table__seat${player.isCurrentTurn ? ' round-table__seat--current-turn' : ''}`}
+                ref={(element) => {
+                  if (element) {
+                    seatRefs.current[player.id] = element
+                    return
+                  }
+
+                  delete seatRefs.current[player.id]
+                }}
+                style={getSeatStyle(index, snapshot.players.length)}
               >
-                <div>
-                  <strong className="player-name">
-                    <span className="player-name__content">
-                      <span>{player.name}</span>
-                      {player.isRoundStarter ? (
-                        <span
-                          className="player-name__badge player-name__badge--starter"
-                          aria-label="Hat die Runde eroeffnet"
-                          title="Hat die Runde eroeffnet"
-                        >
-                          ⚑
-                        </span>
-                      ) : null}
-                      {player.kind === 'Ai' ? (
-                        <span className="player-name__badge" aria-label="AI-Spieler" title="AI-Spieler">
-                          ✦
-                        </span>
-                      ) : null}
-                    </span>
-                    {player.isCurrentTurn ? (
-                      <span className="player-name__turn-indicator" aria-label="Am Zug" title="Am Zug">
-                        👈
+                <article
+                  className={`player-card${player.isViewer ? ' player-card--viewer' : ''}${player.isCurrentTurn ? ' player-card--current-turn' : ''}`}
+                >
+                  <div>
+                    <strong className="player-name">
+                      <span className="player-name__content">
+                        <span>{player.name}</span>
+                        {player.isRoundStarter ? (
+                          <span
+                            className="player-name__badge player-name__badge--starter"
+                            aria-label="Hat die Runde eroeffnet"
+                            title="Hat die Runde eroeffnet"
+                          >
+                            ⚑
+                          </span>
+                        ) : null}
+                        {player.kind === 'Ai' ? (
+                          <span className="player-name__badge" aria-label="AI-Spieler" title="AI-Spieler">
+                            ✦
+                          </span>
+                        ) : null}
+                        {lastPlayedCard ? (
+                          <span
+                            className="player-name__last-card"
+                            aria-label={`Zuletzt gespielt: ${lastPlayedCard.label}`}
+                            title={`Zuletzt gespielt: ${lastPlayedCard.label}`}
+                          >
+                            <CardFace card={lastPlayedCard} className="player-name__last-card-face" />
+                          </span>
+                        ) : null}
                       </span>
-                    ) : null}
-                  </strong>
-                </div>
-                <div className="player-meta">
-                  <span>{formatScore(totalScores.get(player.id) ?? 0)}</span>
-                  <span>{formatRankPosition(rankingByPlayerId.get(player.id) ?? rankingByPlayerId.size)}</span>
-                </div>
-              </article>
-            </div>
-          ))}
+                      {player.isCurrentTurn ? (
+                        <span className="player-name__turn-indicator" aria-label="Am Zug" title="Am Zug">
+                          👈
+                        </span>
+                      ) : null}
+                    </strong>
+                  </div>
+                  <div className="player-meta">
+                    <span>{formatScore(totalScores.get(player.id) ?? 0)}</span>
+                    <span>{formatRankPosition(rankingByPlayerId.get(player.id) ?? rankingByPlayerId.size)}</span>
+                  </div>
+                </article>
+              </div>
+            )
+          })}
 
           {flightOverlay ? (
             <div
@@ -436,6 +453,23 @@ function buildRankingMap(playerIds: string[], totalScores: Map<string, number>) 
       orderedScores.indexOf(totalScores.get(playerId) ?? 0) + 1,
     ] as const),
   )
+}
+
+function buildLastPlayedCardMap(actions: NonNullable<GameSnapshot['currentRound']>['actions']) {
+  const lastPlayedCardByPlayerId = new Map<string, CardView>()
+
+  for (const action of actions) {
+    if (action.type !== 'play' || action.cards.length === 0) {
+      continue
+    }
+
+    const lastPlayedCard = action.cards.at(-1)
+    if (lastPlayedCard) {
+      lastPlayedCardByPlayerId.set(action.playerId, lastPlayedCard)
+    }
+  }
+
+  return lastPlayedCardByPlayerId
 }
 
 function getSeatStyle(index: number, totalPlayers: number): CSSProperties {
