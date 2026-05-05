@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { formatRank, formatStatus, formatSuit, getRankSortIndex, RANK_ORDER } from '../gameUi'
+import { formatRank, formatSuit, getRankSortIndex, RANK_ORDER } from '../gameUi'
 import type { AiCardFlightView, CardView, GameSnapshot, RowView, SessionState, TableStackPosition } from '../types'
 import { CardFace } from './CardFace'
 
@@ -128,7 +128,11 @@ export function SeatingPanel({
     <section className={`panel seating-panel${rankingEntries.length ? ' seating-panel--with-ranking' : ''}`}>
       {rankingEntries.length ? (
         <div className="seating-panel__floating-ranking">
-          <RankingPanel entries={rankingEntries} activePlayerId={snapshot?.activePlayerId ?? null} />
+          <RankingPanel
+            entries={rankingEntries}
+            activePlayerId={snapshot?.activePlayerId ?? null}
+            roundNumber={currentRound?.number ?? null}
+          />
         </div>
       ) : null}
       {session?.role !== 'player' ? (
@@ -164,10 +168,6 @@ export function SeatingPanel({
           <div className="round-table__felt">
             {currentRound ? (
               <div className="table-round-layout">
-                <div className="table-round-summary">
-                  <strong>Runde {currentRound.number}</strong>
-                  <span className="muted-copy">{formatStatus(currentRound.phase)}</span>
-                </div>
                 <div className="table-round-rows">
                   {visibleRows.map((row) => (
                     <div key={row.suit} className="table-round-row">
@@ -341,13 +341,18 @@ function RoundRowStacks({
 function RankingPanel({
   entries,
   activePlayerId,
+  roundNumber,
 }: {
   entries: RankingEntry[]
   activePlayerId: string | null
+  roundNumber: number | null
 }) {
   return (
     <section className="ranking-panel" aria-label="Zwischenstand">
-      <strong className="ranking-panel__title">Zwischenstand</strong>
+      <div className="ranking-panel__header">
+        <strong className="ranking-panel__title">Zwischenstand</strong>
+        {roundNumber ? <span className="ranking-panel__round">Runde {roundNumber}</span> : null}
+      </div>
       <div className="ranking-panel__list">
         {entries.map((entry) => (
           <div

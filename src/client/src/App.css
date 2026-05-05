@@ -545,6 +545,20 @@ input {
   text-align: left;
 }
 
+.ranking-panel__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ranking-panel__round {
+  color: var(--theme-eyebrow);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .ranking-panel__list {
   display: grid;
   gap: 8px;
