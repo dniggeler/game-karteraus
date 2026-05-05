@@ -26,6 +26,26 @@ export function AuthPanel({
   onJoinAsPlayer,
   onLoginAsAdmin,
 }: AuthPanelProps) {
+  function handlePlayerJoinSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (isBusy || playerName.trim().length === 0) {
+      return
+    }
+
+    onJoinAsPlayer()
+  }
+
+  function handleAdminLoginSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (isBusy || adminCode.trim().length === 0) {
+      return
+    }
+
+    onLoginAsAdmin()
+  }
+
   if (sessionRole === 'player') {
     return null
   }
@@ -36,19 +56,19 @@ export function AuthPanel({
       {!sessionRole ? (
         <div className="auth-grid">
           {startupPage === 'player' ? (
-            <div className="auth-card">
+            <form className="auth-card" onSubmit={handlePlayerJoinSubmit}>
               <h3>Als Spieler beitreten</h3>
               <input
                 value={playerName}
                 onChange={(event) => onPlayerNameChange(event.target.value)}
                 placeholder="Dein Name"
               />
-              <button onClick={onJoinAsPlayer} disabled={isBusy || playerName.trim().length === 0}>
+              <button type="submit" disabled={isBusy || playerName.trim().length === 0}>
                 Beitreten
               </button>
-            </div>
+            </form>
           ) : (
-            <div className="auth-card">
+            <form className="auth-card" onSubmit={handleAdminLoginSubmit}>
               <h3>Als Administrator anmelden</h3>
               <input
                 value={adminCode}
@@ -56,13 +76,10 @@ export function AuthPanel({
                 placeholder="Admin-Code"
                 type="password"
               />
-              <button
-                onClick={onLoginAsAdmin}
-                disabled={isBusy || adminCode.trim().length === 0}
-              >
+              <button type="submit" disabled={isBusy || adminCode.trim().length === 0}>
                 Admin Login
               </button>
-            </div>
+            </form>
           )}
         </div>
       ) : snapshot ? (
