@@ -18,8 +18,6 @@ export function HeroPanel({
   onToggleRules,
 }: HeroPanelProps) {
   const viewerName = snapshot?.players.find((player) => player.isViewer)?.name
-  const switchPageHref = startupPage === 'admin' ? '/player' : '/admin'
-  const switchPageLabel = startupPage === 'admin' ? 'Zur Spielerseite' : 'Zur Adminseite'
   const eyebrowLabel = startupPage === 'admin' ? 'Kartenreihen · Admin' : 'Kartenreihen · Spieler'
   const heroCopy =
     startupPage === 'admin'
@@ -34,9 +32,6 @@ export function HeroPanel({
         <p className="hero-copy">{heroCopy}</p>
       </div>
       <div className="hero-actions">
-        <a className="button-link secondary-button" href={switchPageHref}>
-          {switchPageLabel}
-        </a>
         <button className="secondary-button" onClick={onToggleRules}>
           {showRules ? 'Regeln ausblenden' : 'Spielregeln'}
         </button>
