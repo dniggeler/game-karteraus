@@ -43,6 +43,10 @@ export function SeatingPanel({
   }
 
   const rankingByPlayerId = buildRankingMap(snapshot?.players.map((player) => player.id) ?? [], totalScores)
+  const rankingEntries = useMemo(
+    () => buildRankingEntries(snapshot?.players ?? [], totalScores, rankingByPlayerId),
+    [snapshot?.players, totalScores, rankingByPlayerId],
+  )
   const lastPlayedCardByPlayerId = useMemo(
     () => buildLastPlayedCardMap(currentRound?.actions ?? []),
     [currentRound?.actions],
@@ -124,26 +128,31 @@ export function SeatingPanel({
     <section className="panel seating-panel">
       <div className="section-header">
         <h2>Lobby und Sitzordnung</h2>
-        {session?.role === 'admin' && snapshot ? (
-          <div className="button-row">
-            <button onClick={() => onStartGame(3)} disabled={isBusy || !snapshot.canStartGame}>
-              3 Spieler starten
-            </button>
-            <button onClick={() => onStartGame(4)} disabled={isBusy || !snapshot.canStartGame}>
-              4 Spieler starten
-            </button>
-            <button
-              className="secondary-button"
-              onClick={onEndGame}
-              disabled={isBusy || !snapshot.canEndGame}
-            >
-              Partie beenden
-            </button>
-            <button className="secondary-button" onClick={onResetGame} disabled={isBusy}>
-              Alles zuruecksetzen
-            </button>
-          </div>
-        ) : null}
+        <div className="seating-panel__header-side">
+          {rankingEntries.length ? (
+            <RankingPanel entries={rankingEntries} activePlayerId={snapshot?.activePlayerId ?? null} />
+          ) : null}
+          {session?.role === 'admin' && snapshot ? (
+            <div className="button-row">
+              <button onClick={() => onStartGame(3)} disabled={isBusy || !snapshot.canStartGame}>
+                3 Spieler starten
+              </button>
+              <button onClick={() => onStartGame(4)} disabled={isBusy || !snapshot.canStartGame}>
+                4 Spieler starten
+              </button>
+              <button
+                className="secondary-button"
+                onClick={onEndGame}
+                disabled={isBusy || !snapshot.canEndGame}
+              >
+                Partie beenden
+              </button>
+              <button className="secondary-button" onClick={onResetGame} disabled={isBusy}>
+                Alles zuruecksetzen
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {snapshot?.players.length ? (
@@ -241,10 +250,6 @@ export function SeatingPanel({
                       ) : null}
                     </strong>
                   </div>
-                  <div className="player-meta">
-                    <span>{formatScore(totalScores.get(player.id) ?? 0)}</span>
-                    <span>{formatRankPosition(rankingByPlayerId.get(player.id) ?? rankingByPlayerId.size)}</span>
-                  </div>
                 </article>
               </div>
             )
@@ -327,6 +332,32 @@ function RoundRowStacks({
         onRegisterRef={onRegisterStackRef}
       />
     </div>
+  )
+}
+
+function RankingPanel({
+  entries,
+  activePlayerId,
+}: {
+  entries: RankingEntry[]
+  activePlayerId: string | null
+}) {
+  return (
+    <section className="ranking-panel" aria-label="Zwischenstand">
+      <strong className="ranking-panel__title">Zwischenstand</strong>
+      <div className="ranking-panel__list">
+        {entries.map((entry) => (
+          <div
+            key={entry.playerId}
+            className={`ranking-panel__item${entry.playerId === activePlayerId ? ' ranking-panel__item--active' : ''}`}
+          >
+            <span className="ranking-panel__place">{formatRankPosition(entry.rank)}</span>
+            <span className="ranking-panel__name">{entry.playerName}</span>
+            <span className="ranking-panel__score">{formatScore(entry.score)}</span>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -455,6 +486,26 @@ function buildRankingMap(playerIds: string[], totalScores: Map<string, number>) 
   )
 }
 
+function buildRankingEntries(
+  players: GameSnapshot['players'],
+  totalScores: Map<string, number>,
+  rankingByPlayerId: Map<string, number>,
+) {
+  return players
+    .map((player) => ({
+      playerId: player.id,
+      playerName: player.name,
+      score: totalScores.get(player.id) ?? 0,
+      rank: rankingByPlayerId.get(player.id) ?? rankingByPlayerId.size,
+    }))
+    .sort(
+      (left, right) =>
+        left.rank - right.rank ||
+        left.score - right.score ||
+        left.playerName.localeCompare(right.playerName, 'de'),
+    )
+}
+
 function buildLastPlayedCardMap(actions: NonNullable<GameSnapshot['currentRound']>['actions']) {
   const lastPlayedCardByPlayerId = new Map<string, CardView>()
 
@@ -502,6 +553,13 @@ interface FlightOverlay {
   lift: number
   targetStackId: string
   isActive: boolean
+}
+
+interface RankingEntry {
+  playerId: string
+  playerName: string
+  score: number
+  rank: number
 }
 
 const AI_CARD_FLIGHT_DURATION_MS = 1100

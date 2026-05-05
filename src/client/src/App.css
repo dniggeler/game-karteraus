@@ -234,7 +234,6 @@
 .section-header,
 .button-row,
 .player-card,
-.player-meta,
 .status-stack,
 .facts-grid {
   display: flex;
@@ -249,6 +248,13 @@
 .section-header {
   align-items: center;
   margin-bottom: 18px;
+}
+
+.seating-panel__header-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
 }
 
 .button-row {
@@ -414,9 +420,8 @@ input {
 .round-table .player-card {
   flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  min-height: 108px;
-  gap: 10px;
+  min-height: 74px;
+  gap: 8px;
 }
 
 .player-card--viewer {
@@ -511,11 +516,61 @@ input {
   flex: 0 0 auto;
 }
 
-.player-meta {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+.ranking-panel {
+  display: grid;
+  gap: 10px;
+  min-width: min(320px, 100%);
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--theme-border-card);
+  background: var(--theme-card-bg);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
+}
+
+.ranking-panel__title {
   text-align: left;
+}
+
+.ranking-panel__list {
+  display: grid;
+  gap: 8px;
+}
+
+.ranking-panel__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(11, 15, 28, 0.18);
+}
+
+.ranking-panel__item--active {
+  background: rgba(var(--theme-accent-rgb), 0.16);
+  box-shadow: inset 0 0 0 1px rgba(var(--theme-accent-rgb), 0.18);
+}
+
+.ranking-panel__place,
+.ranking-panel__score {
+  white-space: nowrap;
+}
+
+.ranking-panel__place {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--theme-eyebrow);
+}
+
+.ranking-panel__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranking-panel__score {
+  font-weight: 700;
 }
 
 .table-round-layout {
@@ -707,6 +762,11 @@ input {
     flex-direction: column;
   }
 
+  .seating-panel__header-side {
+    width: 100%;
+    align-items: stretch;
+  }
+
   .round-table {
     min-height: 820px;
     padding: 28px 12px;
@@ -833,6 +893,10 @@ input {
 
   .card-face.player-name__last-card-face {
     width: 24px;
+  }
+
+  .ranking-panel {
+    min-width: 0;
   }
 
   .table-round-row {
