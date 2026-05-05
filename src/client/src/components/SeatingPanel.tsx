@@ -171,7 +171,6 @@ export function SeatingPanel({
                 <div className="table-round-rows">
                   {visibleRows.map((row) => (
                     <div key={row.suit} className="table-round-row">
-                      <span className="table-round-row__label">{formatSuit(row.suit)}</span>
                       <RoundRowStacks
                         row={row}
                         startRank={currentRound.startRank}

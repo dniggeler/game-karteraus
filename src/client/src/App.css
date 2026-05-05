@@ -600,23 +600,15 @@ input {
 
 .table-round-row {
   display: grid;
-  grid-template-columns: 48px 1fr;
-  gap: 8px;
+  grid-template-columns: 1fr;
   align-items: center;
-}
-
-.table-round-row__label {
-  color: var(--theme-eyebrow);
-  font-size: 0.82rem;
-  font-weight: 600;
-  text-align: left;
 }
 
 .table-round-row__stacks {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: max-content;
-  justify-content: start;
+  justify-content: center;
   gap: 6px;
   align-items: start;
 }
@@ -807,7 +799,7 @@ input {
 
 @media (max-width: 900px) {
   .table-round-row {
-    grid-template-columns: 42px 1fr;
+    grid-template-columns: 1fr;
   }
 
   .card-face.round-card-preview {
