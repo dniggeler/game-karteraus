@@ -51,6 +51,48 @@ public static class GameEngine
         };
     }
 
+    public static int ChooseRoundStarterIndex(
+        IReadOnlyList<PlayerSlot> players,
+        IReadOnlyList<PlayerRoundScore>? previousRoundScores,
+        Random random)
+    {
+        ArgumentNullException.ThrowIfNull(players);
+        ArgumentNullException.ThrowIfNull(random);
+
+        if (players.Count == 0)
+        {
+            throw new InvalidOperationException("Mindestens ein Spieler wird benoetigt.");
+        }
+
+        if (previousRoundScores is null || previousRoundScores.Count == 0)
+        {
+            return random.Next(players.Count);
+        }
+
+        var remainingCardCountsByPlayerId = previousRoundScores.ToDictionary(
+            score => score.PlayerId,
+            score => score.RemainingCardCount,
+            StringComparer.Ordinal);
+
+        var starterCandidates = players
+            .Select((player, index) => new
+            {
+                Index = index,
+                RemainingCardCount = remainingCardCountsByPlayerId.TryGetValue(player.Id, out var remainingCardCount)
+                    ? remainingCardCount
+                    : throw new InvalidOperationException("Die Rundenauswertung enthaelt nicht alle Spieler.")
+            })
+            .ToList();
+
+        var highestRemainingCardCount = starterCandidates.Max(candidate => candidate.RemainingCardCount);
+        var matchingStarterIndices = starterCandidates
+            .Where(candidate => candidate.RemainingCardCount == highestRemainingCardCount)
+            .Select(candidate => candidate.Index)
+            .ToList();
+
+        return matchingStarterIndices[random.Next(matchingStarterIndices.Count)];
+    }
+
     public static int PreviousIndex(int index, int totalCount) =>
         (index - 1 + totalCount) % totalCount;
 

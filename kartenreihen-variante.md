@@ -22,12 +22,13 @@ Wer als Erster keine Karten mehr auf der Hand hat, gewinnt die Runde.
 
 1. Mischt alle 36 Karten.
 2. Zu Beginn jeder Runde hat genau ein Spieler das **Eroeffnungsrecht**.
-3. In der ersten Runde hat der Geber dieses Eroeffnungsrecht.
-4. Nach jeder Runde wandert dieses Recht gegen den Uhrzeigersinn zum naechsten Spieler weiter.
-5. Teilt alle Karten gleichmaessig aus:
+3. In der ersten Runde wird der Spieler mit diesem Eroeffnungsrecht zufaellig bestimmt.
+4. Ab der zweiten Runde erhaelt der Spieler mit den meisten verbliebenen Handkarten aus der vorherigen Runde dieses Eroeffnungsrecht.
+5. Haben mehrere Spieler gleich viele Karten uebrig, wird unter ihnen zufaellig entschieden.
+6. Teilt alle Karten gleichmaessig aus:
    - bei 3 Spielern je 12 Karten
    - bei 4 Spielern je 9 Karten
-6. Jeder Spieler nimmt seine Karten auf die Hand. Gespielt wird reihum gegen den Uhrzeigersinn.
+7. Jeder Spieler nimmt seine Karten auf die Hand. Gespielt wird reihum gegen den Uhrzeigersinn.
 
 ## Aufbau auf dem Tisch
 
@@ -43,7 +44,7 @@ Die Reihenfolge der Werte lautet immer:
 
 ## Spielablauf
 
-1. Der Spieler mit dem Eroeffnungsrecht beginnt.
+1. Der Spieler mit dem Eroeffnungsrecht beginnt und spielt auch die erste Karte der Runde.
 2. In seinem Zug darf ein Spieler grundsaetzlich **genau eine** gueltige Karte ausspielen.
 3. Kann oder will ein Spieler keine gueltige Karte spielen, passt er.
 4. Danach ist der naechste Spieler an der Reihe.

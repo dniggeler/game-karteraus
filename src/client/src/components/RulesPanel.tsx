@@ -11,8 +11,9 @@ export function RulesPanel() {
           <ul className="rules-list">
             <li>Gespielt wird mit 3 bis 4 Spielern und 36 Karten von 6 bis As.</li>
             <li>Jede Runde waehlt genau ein Spieler den Startwert fuer alle Farben.</li>
-            <li>In Runde 1 beginnt der Geber mit der Wahl, danach wandert das Wahlrecht gegen den Uhrzeigersinn weiter.</li>
-            <li>Der Spieler rechts vom Waehler macht den ersten Zug.</li>
+            <li>In Runde 1 wird der Startspieler zufaellig bestimmt.</li>
+            <li>Ab Runde 2 beginnt der Spieler, der in der vorherigen Runde die meisten Karten uebrig behalten hat.</li>
+            <li>Der Startspieler legt auch die erste Karte und bestimmt damit den Startwert der Runde.</li>
           </ul>
         </article>
 

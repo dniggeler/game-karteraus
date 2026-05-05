@@ -154,6 +154,48 @@ public class GameEngineTests
     }
 
     [Fact]
+    public void ChooseRoundStarterIndex_SelectsRandomPlayer_ForFirstRound()
+    {
+        var players = CreatePlayers();
+
+        var chooserIndex = GameEngine.ChooseRoundStarterIndex(players, previousRoundScores: null, random: new Random(123));
+
+        Assert.InRange(chooserIndex, 0, players.Count - 1);
+    }
+
+    [Fact]
+    public void ChooseRoundStarterIndex_SelectsPlayerWithMostCardsLeft_ForFollowingRound()
+    {
+        var players = CreatePlayers();
+        IReadOnlyList<PlayerRoundScore> scores =
+        [
+            new PlayerRoundScore("p1", "Anna", 3),
+            new PlayerRoundScore("p2", "Bert", 6),
+            new PlayerRoundScore("p3", "Clara", 1)
+        ];
+
+        var chooserIndex = GameEngine.ChooseRoundStarterIndex(players, scores, new Random(123));
+
+        Assert.Equal(1, chooserIndex);
+    }
+
+    [Fact]
+    public void ChooseRoundStarterIndex_BreaksTiesRandomlyBetweenPlayersWithMostCardsLeft()
+    {
+        var players = CreatePlayers();
+        IReadOnlyList<PlayerRoundScore> scores =
+        [
+            new PlayerRoundScore("p1", "Anna", 5),
+            new PlayerRoundScore("p2", "Bert", 5),
+            new PlayerRoundScore("p3", "Clara", 2)
+        ];
+
+        var chooserIndex = GameEngine.ChooseRoundStarterIndex(players, scores, new Random(123));
+
+        Assert.True(chooserIndex is 0 or 1);
+    }
+
+    [Fact]
     public void FirstPlay_SetsStartRankFromPlayedCard()
     {
         var players = CreatePlayers();

@@ -19,19 +19,35 @@ public class GameSessionServiceTests
 
         await service.StartGameAsync(adminSession.Token, 3);
 
-        var chooserSnapshot = service.RestorePlayerSession(playerSession.Token).Snapshot;
-        Assert.True(chooserSnapshot.CanPlay);
+        var chooserSnapshot = await WaitForPlayerTurnAsync(service, playerSession.Token);
+        var actionCountBeforePlay = chooserSnapshot.CurrentRound!.Actions.Count;
         var playedCard = chooserSnapshot.PlayableCards[0];
         var immediateSnapshot = await service.PlayCardsAsync(playerSession.Token, [ToCard(playedCard)]);
 
         var activeAi = immediateSnapshot.Players.Single(player => player.IsCurrentTurn);
         Assert.Equal("Ai", activeAi.Kind);
-        Assert.Single(immediateSnapshot.CurrentRound!.Actions);
+        Assert.Equal(actionCountBeforePlay + 1, immediateSnapshot.CurrentRound!.Actions.Count);
 
         await Task.Delay(80);
 
         var delayedSnapshot = service.RestorePlayerSession(playerSession.Token).Snapshot;
         Assert.True(delayedSnapshot.CurrentRound!.Actions.Count >= 3);
+    }
+
+    private static async Task<Kartenreihen.Api.Contracts.GameSnapshot> WaitForPlayerTurnAsync(GameSessionService service, string playerToken)
+    {
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            var snapshot = service.RestorePlayerSession(playerToken).Snapshot;
+            if (snapshot.CanPlay)
+            {
+                return snapshot;
+            }
+
+            await Task.Delay(40);
+        }
+
+        throw new InvalidOperationException("Der menschliche Spieler wurde nicht rechtzeitig am Zug.");
     }
 
     private static GameSessionService CreateService(int aiMoveDelayMilliseconds) =>

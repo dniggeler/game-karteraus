@@ -135,13 +135,15 @@ public sealed class GameSessionService(
                 _nextAiNumber++;
             }
 
+            var initialChooser = GameEngine.ChooseRoundStarterIndex(players, previousRoundScores: null, _random);
+
             _match = new MatchState
             {
                 Id = Guid.NewGuid().ToString("N"),
                 Players = players,
                 TargetPlayerCount = targetPlayerCount,
                 Status = MatchStatus.Active,
-                CurrentRound = GameEngine.CreateRound(players, 1, 0, _random)
+                CurrentRound = GameEngine.CreateRound(players, 1, initialChooser, _random)
             };
 
             snapshot = BuildAdminSnapshotLocked(adminToken);
@@ -311,6 +313,7 @@ public sealed class GameSessionService(
 
         if (round.Phase == RoundPhase.Completed)
         {
+            var roundScores = BuildRoundScores(round, _match.Players);
             var winner = _match.Players.Single(player => player.Id == round.WinnerPlayerId);
             _match.Results.Add(new RoundResult(
                 round.Number,
@@ -318,9 +321,9 @@ public sealed class GameSessionService(
                 winner.Name,
                 round.StartRank ?? CardRank.Six,
                 round.ChooserIndex,
-                BuildRoundScores(round, _match.Players)));
+                roundScores));
 
-            var nextChooser = GameEngine.PreviousIndex(round.ChooserIndex, _match.Players.Count);
+            var nextChooser = GameEngine.ChooseRoundStarterIndex(_match.Players, roundScores, _random);
             _match.CurrentRound = GameEngine.CreateRound(_match.Players, round.Number + 1, nextChooser, _random);
             return true;
         }
