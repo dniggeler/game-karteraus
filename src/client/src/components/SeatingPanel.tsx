@@ -301,14 +301,22 @@ function RoundRowStacks({
   const lowerStackId = getStackId(row.suit, 'lower')
   const startStackId = getStackId(row.suit, 'start')
   const upperStackId = getStackId(row.suit, 'upper')
-  const lowerCards = filterHiddenCards(
-    startCard ? buildBoundaryStackCards(row.lowestCard, startCard, 'lower') : [],
-    hiddenCardCodesByStack.get(lowerStackId),
-  )
-  const upperCards = filterHiddenCards(
-    startCard ? buildBoundaryStackCards(row.highestCard, startCard, 'upper') : [],
-    hiddenCardCodesByStack.get(upperStackId),
-  )
+  const lowerCards = startCard
+    ? buildVisibleBoundaryStackCards(
+        row.lowestCard,
+        startCard,
+        'lower',
+        hiddenCardCodesByStack.get(lowerStackId),
+      )
+    : []
+  const upperCards = startCard
+    ? buildVisibleBoundaryStackCards(
+        row.highestCard,
+        startCard,
+        'upper',
+        hiddenCardCodesByStack.get(upperStackId),
+      )
+    : []
   const visibleStartCards = filterHiddenCards(startCard ? [startCard] : [], hiddenCardCodesByStack.get(startStackId))
   const startPlaceholderCard =
     !startCard && visibleStartCards.length === 0 ? createPlaceholderStartCard(row.suit, startRank) : null
@@ -412,10 +420,11 @@ function RoundCardStack({
   )
 }
 
-function buildBoundaryStackCards(
+function buildVisibleBoundaryStackCards(
   boundaryCard: CardView | null,
   startCard: CardView,
   direction: 'lower' | 'upper',
+  hiddenCardCodes: Set<string> | undefined,
 ) {
   const startIndex = getRankSortIndex(startCard.rank)
   const boundaryIndex = boundaryCard ? getRankSortIndex(boundaryCard.rank) : Number.MAX_SAFE_INTEGER
@@ -425,10 +434,37 @@ function buildBoundaryStackCards(
   }
 
   if (direction === 'lower') {
-    return boundaryIndex < startIndex && boundaryCard ? [boundaryCard] : []
+    if (boundaryIndex >= startIndex || !boundaryCard) {
+      return []
+    }
+
+    if (!hiddenCardCodes?.has(boundaryCard.code)) {
+      return [boundaryCard]
+    }
+
+    const fallbackIndex = boundaryIndex + 1
+    return fallbackIndex < startIndex ? [createStackCard(boundaryCard.suit, RANK_ORDER[fallbackIndex])] : []
   }
 
-  return boundaryIndex > startIndex && boundaryCard ? [boundaryCard] : []
+  if (boundaryIndex <= startIndex || !boundaryCard) {
+    return []
+  }
+
+  if (!hiddenCardCodes?.has(boundaryCard.code)) {
+    return [boundaryCard]
+  }
+
+  const fallbackIndex = boundaryIndex - 1
+  return fallbackIndex > startIndex ? [createStackCard(boundaryCard.suit, RANK_ORDER[fallbackIndex])] : []
+}
+
+function createStackCard(suit: string, rank: (typeof RANK_ORDER)[number]): CardView {
+  return {
+    code: `${suit}-${rank}`,
+    suit,
+    rank,
+    label: `${formatRank(rank)} ${formatSuit(suit)}`,
+  }
 }
 
 function createPlaceholderStartCard(suit: string, startRank: string | null) {
@@ -436,12 +472,7 @@ function createPlaceholderStartCard(suit: string, startRank: string | null) {
     return null
   }
 
-  return {
-    code: `${suit}-${startRank}`,
-    suit,
-    rank: startRank as (typeof RANK_ORDER)[number],
-    label: `${formatRank(startRank as (typeof RANK_ORDER)[number])} ${formatSuit(suit)}`,
-  }
+  return createStackCard(suit, startRank as (typeof RANK_ORDER)[number])
 }
 
 function filterHiddenCards(cards: CardView[], hiddenCardCodes: Set<string> | undefined) {
