@@ -127,7 +127,7 @@ export function SeatingPanel({
   return (
     <section className="panel seating-panel">
       <div className="section-header">
-        <h2>Lobby und Sitzordnung</h2>
+        {session?.role !== 'player' ? <h2>Lobby und Sitzordnung</h2> : null}
         <div className="seating-panel__header-side">
           {rankingEntries.length ? (
             <RankingPanel entries={rankingEntries} activePlayerId={snapshot?.activePlayerId ?? null} />
