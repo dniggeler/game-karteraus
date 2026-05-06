@@ -275,6 +275,16 @@
   flex-wrap: wrap;
 }
 
+.round-limit-field {
+  display: grid;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.round-limit-field small {
+  color: var(--theme-muted);
+}
+
 button,
 input {
   border-radius: 12px;
@@ -339,6 +349,29 @@ input {
 .message-box {
   background: var(--theme-message-bg);
   border: 1px solid var(--theme-border-soft);
+}
+
+.final-ranking-banner {
+  margin-bottom: 20px;
+}
+
+.final-ranking-banner strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.final-ranking-banner p {
+  margin: 0;
+  color: var(--theme-copy);
+}
+
+.final-ranking-banner__entries {
+  display: flex;
+  gap: 10px 16px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  color: var(--theme-pill-text);
+  font-weight: 600;
 }
 
 .action-box {

@@ -97,7 +97,11 @@ public sealed class MatchState
 
     public required int TargetPlayerCount { get; init; }
 
+    public int? RoundLimit { get; init; }
+
     public MatchStatus Status { get; set; } = MatchStatus.Lobby;
+
+    public bool CompletedBecauseRoundLimit { get; set; }
 
     public RoundState? CurrentRound { get; set; }
 

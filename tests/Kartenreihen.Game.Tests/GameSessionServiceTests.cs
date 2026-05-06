@@ -17,7 +17,7 @@ public class GameSessionServiceTests
         var playerSession = await service.JoinPlayerAsync("Anna");
         var adminSession = await service.LoginAdminAsync("admin");
 
-        await service.StartGameAsync(adminSession.Token, 3);
+        await service.StartGameAsync(adminSession.Token, 3, roundLimit: null);
 
         var chooserSnapshot = await WaitForPlayerTurnAsync(service, playerSession.Token);
         var actionCountBeforePlay = chooserSnapshot.CurrentRound!.Actions.Count;
@@ -34,6 +34,25 @@ public class GameSessionServiceTests
         Assert.True(delayedSnapshot.CurrentRound!.Actions.Count >= 3);
     }
 
+    [Fact]
+    public async Task StartGameAsync_WithRoundLimit_CompletesMatchAfterFinalRound()
+    {
+        var service = CreateService(aiMoveDelayMilliseconds: 1);
+        var playerSession = await service.JoinPlayerAsync("Anna");
+        var adminSession = await service.LoginAdminAsync("admin");
+
+        await service.StartGameAsync(adminSession.Token, 3, roundLimit: 1);
+
+        var completedSnapshot = await PlayUntilMatchCompletedAsync(service, playerSession.Token);
+
+        Assert.Equal(MatchStatus.Completed.ToString(), completedSnapshot.MatchStatus);
+        Assert.Null(completedSnapshot.CurrentRound);
+        Assert.Equal(1, completedSnapshot.RoundLimit);
+        Assert.Single(completedSnapshot.Results);
+        Assert.NotNull(completedSnapshot.FinalRankingMessage);
+        Assert.Contains("Endrangliste nach 1 Runde", completedSnapshot.FinalRankingMessage);
+    }
+
     private static async Task<Kartenreihen.Api.Contracts.GameSnapshot> WaitForPlayerTurnAsync(GameSessionService service, string playerToken)
     {
         for (var attempt = 0; attempt < 20; attempt++)
@@ -48,6 +67,43 @@ public class GameSessionServiceTests
         }
 
         throw new InvalidOperationException("Der menschliche Spieler wurde nicht rechtzeitig am Zug.");
+    }
+
+    private static async Task<Kartenreihen.Api.Contracts.GameSnapshot> PlayUntilMatchCompletedAsync(GameSessionService service, string playerToken)
+    {
+        for (var attempt = 0; attempt < 400; attempt++)
+        {
+            var snapshot = service.RestorePlayerSession(playerToken).Snapshot;
+            if (snapshot.MatchStatus == MatchStatus.Completed.ToString())
+            {
+                return snapshot;
+            }
+
+            if (snapshot.CanFinishEntireHand)
+            {
+                await service.PlayCardsAsync(playerToken, snapshot.ViewerHand.Select(ToCard).ToList());
+                await Task.Delay(5);
+                continue;
+            }
+
+            if (snapshot.CanPlay && snapshot.PlayableCards.Count > 0)
+            {
+                await service.PlayCardsAsync(playerToken, [ToCard(snapshot.PlayableCards[0])]);
+                await Task.Delay(5);
+                continue;
+            }
+
+            if (snapshot.CanPass)
+            {
+                await service.PassAsync(playerToken);
+                await Task.Delay(5);
+                continue;
+            }
+
+            await Task.Delay(5);
+        }
+
+        throw new InvalidOperationException("Die Partie wurde nicht rechtzeitig abgeschlossen.");
     }
 
     private static GameSessionService CreateService(int aiMoveDelayMilliseconds) =>

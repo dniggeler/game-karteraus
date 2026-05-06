@@ -39,10 +39,10 @@ export const api = {
   restoreAdmin: (token: string) =>
     request<SessionResponse>(`/api/session/admin/${token}`),
 
-  startGame: (adminToken: string, targetPlayerCount: number) =>
+  startGame: (adminToken: string, targetPlayerCount: number, roundLimit: number | null) =>
     request<GameSnapshot>('/api/admin/start', {
       method: 'POST',
-      body: JSON.stringify({ adminToken, targetPlayerCount }),
+      body: JSON.stringify({ adminToken, targetPlayerCount, roundLimit }),
     }),
 
   endGame: (adminToken: string) =>

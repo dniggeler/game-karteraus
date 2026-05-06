@@ -13,12 +13,14 @@ export interface GameSnapshot {
   matchStatus: string
   humanPlayers: number
   targetPlayerCount: number | null
+  roundLimit: number | null
   canStartGame: boolean
   canEndGame: boolean
   canPlay: boolean
   canPass: boolean
   canFinishEntireHand: boolean
   message: string | null
+  finalRankingMessage: string | null
   viewerPlayerId: string | null
   activePlayerId: string | null
   players: PlayerView[]

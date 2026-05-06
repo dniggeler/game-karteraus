@@ -54,7 +54,7 @@ app.MapGet("/api/session/admin/{token}", (string token, GameSessionService servi
     Execute(() => service.RestoreAdminSession(token)));
 
 app.MapPost("/api/admin/start", async (StartGameRequest request, GameSessionService service) =>
-    await ExecuteAsync(() => service.StartGameAsync(request.AdminToken, request.TargetPlayerCount)));
+    await ExecuteAsync(() => service.StartGameAsync(request.AdminToken, request.TargetPlayerCount, request.RoundLimit)));
 
 app.MapPost("/api/admin/end", async (EndGameRequest request, GameSessionService service) =>
     await ExecuteAsync(() => service.EndGameAsync(request.AdminToken)));

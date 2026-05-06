@@ -42,6 +42,7 @@ Die Einstiegspunkte sind `http://localhost:5173/player` fuer Spieler und `http:/
 - Standard-Admin-Code in `src/server/Kartenreihen.Api/appsettings.json`: `admin`
 - Die Admin-Oberflaeche ist unter `/admin` erreichbar, die Spieler-Oberflaeche unter `/player`.
 - Fuer produktive Deployments sollte der Wert per `Game__AdminCode` ueberschrieben werden.
+- Beim Start einer Partie kann der Administrator optional eine feste Rundenzahl setzen; leer bedeutet unbegrenzt.
 - Die Denkzeit der AI-Spieler kann per `Game__AiMoveDelayMilliseconds` angepasst werden. Standard: `1200`.
 
 ## Deployment

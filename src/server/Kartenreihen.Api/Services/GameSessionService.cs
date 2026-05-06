@@ -95,7 +95,7 @@ public sealed class GameSessionService(
         }
     }
 
-    public async Task<GameSnapshot> StartGameAsync(string adminToken, int targetPlayerCount)
+    public async Task<GameSnapshot> StartGameAsync(string adminToken, int targetPlayerCount, int? roundLimit)
     {
         GameSnapshot snapshot;
         lock (_syncRoot)
@@ -105,6 +105,11 @@ public sealed class GameSessionService(
             if (targetPlayerCount is not 3 and not 4)
             {
                 throw new InvalidOperationException("Eine Partie kann nur mit 3 oder 4 Spielern gestartet werden.");
+            }
+
+            if (roundLimit is <= 0)
+            {
+                throw new InvalidOperationException("Die Rundenzahl muss mindestens 1 betragen.");
             }
 
             if (_match?.Status == MatchStatus.Active)
@@ -142,6 +147,7 @@ public sealed class GameSessionService(
                 Id = Guid.NewGuid().ToString("N"),
                 Players = players,
                 TargetPlayerCount = targetPlayerCount,
+                RoundLimit = roundLimit,
                 Status = MatchStatus.Active,
                 CurrentRound = GameEngine.CreateRound(players, 1, initialChooser, _random)
             };
@@ -323,6 +329,14 @@ public sealed class GameSessionService(
                 round.ChooserIndex,
                 roundScores));
 
+            if (_match.RoundLimit.HasValue && _match.Results.Count >= _match.RoundLimit.Value)
+            {
+                _match.Status = MatchStatus.Completed;
+                _match.CompletedBecauseRoundLimit = true;
+                _match.CurrentRound = null;
+                return true;
+            }
+
             var nextChooser = GameEngine.ChooseRoundStarterIndex(_match.Players, roundScores, _random);
             _match.CurrentRound = GameEngine.CreateRound(_match.Players, round.Number + 1, nextChooser, _random);
             return true;
@@ -407,12 +421,14 @@ public sealed class GameSessionService(
             activeMatch?.Status.ToString() ?? MatchStatus.Lobby.ToString(),
             _humanPlayers.Count,
             activeMatch?.TargetPlayerCount,
+            activeMatch?.RoundLimit,
             false,
             false,
             canPlay,
             canPass,
             canFinishEntireHand,
             BuildPlayerMessage(activeMatch, viewerPlayer),
+            BuildFinalRankingMessage(activeMatch),
             session.PlayerId,
             GetActivePlayerId(activeMatch),
             BuildPlayerViews(activeMatch, session.PlayerId),
@@ -431,12 +447,14 @@ public sealed class GameSessionService(
             _match?.Status.ToString() ?? MatchStatus.Lobby.ToString(),
             _humanPlayers.Count,
             _match?.TargetPlayerCount,
+            _match?.RoundLimit,
             _match?.Status != MatchStatus.Active,
             _match?.Status == MatchStatus.Active,
             false,
             false,
             false,
             BuildAdminMessage(),
+            BuildFinalRankingMessage(_match),
             null,
             GetActivePlayerId(_match),
             BuildPlayerViews(_match, null),
@@ -555,6 +573,11 @@ public sealed class GameSessionService(
 
         if (match.Status == MatchStatus.Completed)
         {
+            if (match.CompletedBecauseRoundLimit && match.RoundLimit.HasValue)
+            {
+                return $"Die Partie ist nach {match.RoundLimit.Value} Runde{(match.RoundLimit.Value == 1 ? string.Empty : "n")} beendet.";
+            }
+
             return "Die Partie wurde vom Administrator beendet.";
         }
 
@@ -588,10 +611,53 @@ public sealed class GameSessionService(
 
         return _match.Status switch
         {
-            MatchStatus.Active => "Partie laeuft. Der Administrator kann sie jederzeit beenden.",
+            MatchStatus.Active => _match.RoundLimit.HasValue
+                ? $"Partie laeuft mit festem Limit von {_match.RoundLimit.Value} Runde{(_match.RoundLimit.Value == 1 ? string.Empty : "n")}."
+                : "Partie laeuft ohne Rundelimit. Der Administrator kann sie jederzeit beenden.",
+            MatchStatus.Completed when _match.CompletedBecauseRoundLimit && _match.RoundLimit.HasValue =>
+                $"Die Partie ist nach {_match.RoundLimit.Value} Runde{(_match.RoundLimit.Value == 1 ? string.Empty : "n")} beendet.",
             MatchStatus.Completed => "Die letzte Partie wurde beendet. Eine neue Partie kann gestartet werden.",
             _ => "Lobby offen."
         };
+    }
+
+    private static string? BuildFinalRankingMessage(MatchState? match)
+    {
+        if (match?.Status != MatchStatus.Completed || !match.CompletedBecauseRoundLimit || !match.RoundLimit.HasValue || match.Results.Count == 0)
+        {
+            return null;
+        }
+
+        var totalScores = match.Players.ToDictionary(player => player.Id, _ => 0, StringComparer.Ordinal);
+        foreach (var result in match.Results)
+        {
+            foreach (var score in result.Scores)
+            {
+                totalScores[score.PlayerId] = totalScores.GetValueOrDefault(score.PlayerId) + score.RemainingCardCount;
+            }
+        }
+
+        var orderedPlayers = match.Players
+            .Select(player => new
+            {
+                player.Name,
+                Score = totalScores[player.Id]
+            })
+            .OrderBy(entry => entry.Score)
+            .ThenBy(entry => entry.Name, StringComparer.CurrentCulture)
+            .ToList();
+
+        var placements = orderedPlayers
+            .Select((entry, index) =>
+            {
+                var sharedRank = orderedPlayers
+                    .Take(index)
+                    .Count(candidate => candidate.Score < entry.Score) + 1;
+                var pointsLabel = entry.Score == 1 ? "Punkt" : "Punkte";
+                return $"{sharedRank}. {entry.Name} ({entry.Score} {pointsLabel})";
+            });
+
+        return $"Endrangliste nach {match.RoundLimit.Value} Runde{(match.RoundLimit.Value == 1 ? string.Empty : "n")}: {string.Join(", ", placements)}";
     }
 
     private static CardView ToCardView(Card card) =>

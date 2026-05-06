@@ -4,7 +4,7 @@ public sealed record PlayerJoinRequest(string Name);
 
 public sealed record AdminLoginRequest(string Code);
 
-public sealed record StartGameRequest(string AdminToken, int TargetPlayerCount);
+public sealed record StartGameRequest(string AdminToken, int TargetPlayerCount, int? RoundLimit);
 
 public sealed record EndGameRequest(string AdminToken);
 
@@ -25,12 +25,14 @@ public sealed record GameSnapshot(
     string MatchStatus,
     int HumanPlayers,
     int? TargetPlayerCount,
+    int? RoundLimit,
     bool CanStartGame,
     bool CanEndGame,
     bool CanPlay,
     bool CanPass,
     bool CanFinishEntireHand,
     string? Message,
+    string? FinalRankingMessage,
     string? ViewerPlayerId,
     string? ActivePlayerId,
     IReadOnlyList<PlayerView> Players,

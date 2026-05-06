@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { formatRank, formatSuit, getRankSortIndex, RANK_ORDER } from '../gameUi'
+import { buildRankingEntries, formatRankPosition, formatScore, type RankingEntry } from '../ranking'
 import type { AiCardFlightView, CardView, GameSnapshot, RowView, SessionState, TableStackPosition } from '../types'
 import { CardFace } from './CardFace'
 
@@ -10,7 +11,7 @@ interface SeatingPanelProps {
   pendingAiCardFlights: AiCardFlightView[]
   isBusy: boolean
   onAiCardFlightComplete: () => void
-  onStartGame: (targetPlayerCount: number) => void
+  onStartGame: (targetPlayerCount: number, roundLimit: number | null) => void
   onEndGame: () => void
   onResetGame: () => void
 }
@@ -30,23 +31,16 @@ export function SeatingPanel({
   const seatRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const stackRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [flightOverlay, setFlightOverlay] = useState<FlightOverlay | null>(null)
+  const [roundLimitInput, setRoundLimitInput] = useState('')
   const currentRound = snapshot?.currentRound ?? null
   const visibleRows = snapshot?.currentRound?.rows.filter((row) => !isRowCompleted(row)) ?? []
-  const totalScores = new Map<string, number>(
-    snapshot?.players.map((player) => [player.id, 0] as const) ?? [],
-  )
-
-  for (const result of snapshot?.results ?? []) {
-    for (const score of result.scores) {
-      totalScores.set(score.playerId, (totalScores.get(score.playerId) ?? 0) + score.remainingCardCount)
-    }
-  }
-
-  const rankingByPlayerId = buildRankingMap(snapshot?.players.map((player) => player.id) ?? [], totalScores)
   const rankingEntries = useMemo(
-    () => buildRankingEntries(snapshot?.players ?? [], totalScores, rankingByPlayerId),
-    [snapshot?.players, totalScores, rankingByPlayerId],
+    () => buildRankingEntries(snapshot?.players ?? [], snapshot?.results ?? []),
+    [snapshot?.players, snapshot?.results],
   )
+  const showInterimRanking = rankingEntries.length > 0 && !snapshot?.finalRankingMessage
+  const parsedRoundLimit = parseRoundLimitInput(roundLimitInput)
+  const isRoundLimitValid = parsedRoundLimit !== 'invalid'
   const lastPlayedCardByPlayerId = useMemo(
     () => buildLastPlayedCardMap(currentRound?.actions ?? []),
     [currentRound?.actions],
@@ -125,8 +119,8 @@ export function SeatingPanel({
   }, [snapshot?.players.length])
 
   return (
-    <section className={`panel seating-panel${rankingEntries.length ? ' seating-panel--with-ranking' : ''}`}>
-      {rankingEntries.length ? (
+    <section className={`panel seating-panel${showInterimRanking ? ' seating-panel--with-ranking' : ''}`}>
+      {showInterimRanking ? (
         <div className="seating-panel__floating-ranking">
           <RankingPanel
             entries={rankingEntries}
@@ -140,24 +134,45 @@ export function SeatingPanel({
           <h2>Lobby und Sitzordnung</h2>
           <div className="seating-panel__header-side">
             {session?.role === 'admin' && snapshot ? (
-              <div className="button-row">
-                <button onClick={() => onStartGame(3)} disabled={isBusy || !snapshot.canStartGame}>
-                  3 Spieler starten
-                </button>
-                <button onClick={() => onStartGame(4)} disabled={isBusy || !snapshot.canStartGame}>
-                  4 Spieler starten
-                </button>
-                <button
-                  className="secondary-button"
-                  onClick={onEndGame}
-                  disabled={isBusy || !snapshot.canEndGame}
-                >
-                  Partie beenden
-                </button>
-                <button className="secondary-button" onClick={onResetGame} disabled={isBusy}>
-                  Alles zuruecksetzen
-                </button>
-              </div>
+              <>
+                <div className="button-row">
+                  <button
+                    onClick={() => onStartGame(3, parsedRoundLimit === 'invalid' ? null : parsedRoundLimit)}
+                    disabled={isBusy || !snapshot.canStartGame || !isRoundLimitValid}
+                  >
+                    3 Spieler starten
+                  </button>
+                  <button
+                    onClick={() => onStartGame(4, parsedRoundLimit === 'invalid' ? null : parsedRoundLimit)}
+                    disabled={isBusy || !snapshot.canStartGame || !isRoundLimitValid}
+                  >
+                    4 Spieler starten
+                  </button>
+                  <button
+                    className="secondary-button"
+                    onClick={onEndGame}
+                    disabled={isBusy || !snapshot.canEndGame}
+                  >
+                    Partie beenden
+                  </button>
+                  <button className="secondary-button" onClick={onResetGame} disabled={isBusy}>
+                    Alles zuruecksetzen
+                  </button>
+                </div>
+                <label className="round-limit-field">
+                  <span>Feste Rundenzahl</span>
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={roundLimitInput}
+                    onChange={(event) => setRoundLimitInput(event.target.value)}
+                    placeholder="unbegrenzt"
+                    inputMode="numeric"
+                  />
+                  <small>{isRoundLimitValid ? 'Leer lassen fuer unbegrenzt.' : 'Bitte eine ganze Zahl ab 1 eingeben.'}</small>
+                </label>
+              </>
             ) : null}
           </div>
         </div>
@@ -487,47 +502,6 @@ function isRowCompleted(row: RowView) {
   return row.isOpen && row.lowestCard?.rank === 'Six' && row.highestCard?.rank === 'Ace'
 }
 
-function formatScore(score: number) {
-  return `${score} ${score === 1 ? 'Punkt' : 'Punkte'}`
-}
-
-function formatRankPosition(rank: number) {
-  return `Platz ${rank}`
-}
-
-function buildRankingMap(playerIds: string[], totalScores: Map<string, number>) {
-  const orderedScores = [...new Set(playerIds.map((playerId) => totalScores.get(playerId) ?? 0))].sort(
-    (left, right) => left - right,
-  )
-
-  return new Map(
-    playerIds.map((playerId) => [
-      playerId,
-      orderedScores.indexOf(totalScores.get(playerId) ?? 0) + 1,
-    ] as const),
-  )
-}
-
-function buildRankingEntries(
-  players: GameSnapshot['players'],
-  totalScores: Map<string, number>,
-  rankingByPlayerId: Map<string, number>,
-) {
-  return players
-    .map((player) => ({
-      playerId: player.id,
-      playerName: player.name,
-      score: totalScores.get(player.id) ?? 0,
-      rank: rankingByPlayerId.get(player.id) ?? rankingByPlayerId.size,
-    }))
-    .sort(
-      (left, right) =>
-        left.rank - right.rank ||
-        left.score - right.score ||
-        left.playerName.localeCompare(right.playerName, 'de'),
-    )
-}
-
 function buildLastPlayedCardMap(actions: NonNullable<GameSnapshot['currentRound']>['actions']) {
   const lastPlayedCardByPlayerId = new Map<string, CardView>()
 
@@ -577,11 +551,18 @@ interface FlightOverlay {
   isActive: boolean
 }
 
-interface RankingEntry {
-  playerId: string
-  playerName: string
-  score: number
-  rank: number
+function parseRoundLimitInput(value: string): number | null | 'invalid' {
+  const trimmedValue = value.trim()
+  if (trimmedValue.length === 0) {
+    return null
+  }
+
+  if (!/^\d+$/.test(trimmedValue)) {
+    return 'invalid'
+  }
+
+  const parsedValue = Number.parseInt(trimmedValue, 10)
+  return parsedValue >= 1 ? parsedValue : 'invalid'
 }
 
 const AI_CARD_FLIGHT_DURATION_MS = 1100

@@ -98,6 +98,10 @@ export function AuthPanel({
               <dt>Zielgroesse</dt>
               <dd>{snapshot.targetPlayerCount ?? '-'}</dd>
             </div>
+            <div>
+              <dt>Runden</dt>
+              <dd>{snapshot.roundLimit ?? 'unbegrenzt'}</dd>
+            </div>
           </dl>
         </div>
       ) : (

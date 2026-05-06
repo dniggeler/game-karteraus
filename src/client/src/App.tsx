@@ -10,6 +10,7 @@ import { RulesPanel } from './components/RulesPanel'
 import { SeatingPanel } from './components/SeatingPanel'
 import { getApiBaseUrl } from './config'
 import { SUIT_ORDER, compareCardsByRank, getRankSortIndex } from './gameUi'
+import { buildRankingEntries, formatRankPosition, formatScore } from './ranking'
 import type {
   AiCardFlightView,
   CardView,
@@ -165,6 +166,10 @@ function App() {
     () => (activeAiCardFlight ? [activeAiCardFlight, ...aiCardFlightQueue] : aiCardFlightQueue),
     [activeAiCardFlight, aiCardFlightQueue],
   )
+  const finalRankingEntries = useMemo(
+    () => buildRankingEntries(snapshot?.players ?? [], snapshot?.results ?? []),
+    [snapshot?.players, snapshot?.results],
+  )
 
   useEffect(() => {
     const currentRound = snapshot?.currentRound ?? null
@@ -312,13 +317,13 @@ function App() {
     })
   }
 
-  const startGame = async (targetPlayerCount: number) => {
+  const startGame = async (targetPlayerCount: number, roundLimit: number | null) => {
     if (!session || session.role !== 'admin') {
       return
     }
 
     await runAction(async () => {
-      const nextSnapshot = await api.startGame(session.token, targetPlayerCount)
+      const nextSnapshot = await api.startGame(session.token, targetPlayerCount, roundLimit)
       setSnapshot(nextSnapshot)
     })
   }
@@ -443,6 +448,19 @@ function App() {
       {showRules ? <RulesPanel /> : null}
 
       {error ? <div className="error-banner">{error}</div> : null}
+      {snapshot?.finalRankingMessage ? (
+        <section className="message-box final-ranking-banner" aria-live="polite">
+          <strong>Endrangliste</strong>
+          <p>{snapshot.finalRankingMessage}</p>
+          <div className="final-ranking-banner__entries">
+            {finalRankingEntries.map((entry) => (
+              <span key={entry.playerId}>
+                {formatRankPosition(entry.rank)}: {entry.playerName} ({formatScore(entry.score)})
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="layout-grid">
         <AuthPanel
