@@ -351,27 +351,61 @@ input {
   border: 1px solid var(--theme-border-soft);
 }
 
-.final-ranking-banner {
-  margin-bottom: 20px;
+.final-ranking-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 24;
 }
 
-.final-ranking-banner strong {
-  display: block;
-  margin-bottom: 8px;
+.final-ranking-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 18, 0.72);
+  backdrop-filter: blur(10px);
 }
 
-.final-ranking-banner p {
+.final-ranking-overlay__panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 20px;
+  width: min(560px, calc(100vw - 32px));
+  padding: 28px;
+  border-radius: 24px;
+  border: 1px solid rgba(var(--theme-accent-rgb), 0.26);
+  background: linear-gradient(180deg, rgba(15, 19, 34, 0.98), rgba(24, 31, 56, 0.96));
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.46),
+    0 0 0 1px rgba(var(--theme-accent-rgb), 0.14);
+}
+
+.final-ranking-overlay__copy {
+  display: grid;
+  gap: 8px;
+}
+
+.final-ranking-overlay__copy h2,
+.final-ranking-overlay__rematch strong {
+  margin: 0;
+}
+
+.final-ranking-overlay__copy p,
+.final-ranking-overlay__rematch p {
   margin: 0;
   color: var(--theme-copy);
 }
 
-.final-ranking-banner__entries {
-  display: flex;
-  gap: 10px 16px;
-  flex-wrap: wrap;
-  margin-top: 12px;
+.final-ranking-overlay__rematch {
+  display: grid;
+  gap: 10px;
+}
+
+.final-ranking-overlay__progress {
   color: var(--theme-pill-text);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .action-box {

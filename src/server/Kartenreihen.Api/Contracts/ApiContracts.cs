@@ -14,6 +14,8 @@ public sealed record PassTurnRequest(string PlayerToken);
 
 public sealed record PlayCardsRequest(string PlayerToken, IReadOnlyList<CardRequest> Cards);
 
+public sealed record RematchVoteRequest(string PlayerToken, bool WantsAnotherRound);
+
 public sealed record CardRequest(string Suit, string Rank);
 
 public sealed record SessionResponse(string Token, GameSnapshot Snapshot);
@@ -33,6 +35,10 @@ public sealed record GameSnapshot(
     bool CanFinishEntireHand,
     string? Message,
     string? FinalRankingMessage,
+    bool CanVoteForAnotherRound,
+    bool? ViewerWantsAnotherRound,
+    int PlayersWantAnotherRound,
+    int PlayersRequiredForAnotherRound,
     string? ViewerPlayerId,
     string? ActivePlayerId,
     IReadOnlyList<PlayerView> Players,

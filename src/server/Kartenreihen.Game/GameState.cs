@@ -106,4 +106,6 @@ public sealed class MatchState
     public RoundState? CurrentRound { get; set; }
 
     public List<RoundResult> Results { get; } = [];
+
+    public Dictionary<string, bool> RematchPreferences { get; } = new(StringComparer.Ordinal);
 }

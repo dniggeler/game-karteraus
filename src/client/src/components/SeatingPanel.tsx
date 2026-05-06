@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { formatRank, formatSuit, getRankSortIndex, RANK_ORDER } from '../gameUi'
-import { buildRankingEntries, formatRankPosition, formatScore, type RankingEntry } from '../ranking'
+import { buildRankingEntries } from '../ranking'
 import type { AiCardFlightView, CardView, GameSnapshot, RowView, SessionState, TableStackPosition } from '../types'
 import { CardFace } from './CardFace'
+import { RankingPanel } from './RankingPanel'
 
 interface SeatingPanelProps {
   session: SessionState | null
@@ -123,9 +124,11 @@ export function SeatingPanel({
       {showInterimRanking ? (
         <div className="seating-panel__floating-ranking">
           <RankingPanel
+            title="Zwischenstand"
             entries={rankingEntries}
             activePlayerId={snapshot?.activePlayerId ?? null}
             roundNumber={currentRound?.number ?? null}
+            ariaLabel="Zwischenstand"
           />
         </div>
       ) : null}
@@ -358,37 +361,6 @@ function RoundRowStacks({
         onRegisterRef={onRegisterStackRef}
       />
     </div>
-  )
-}
-
-function RankingPanel({
-  entries,
-  activePlayerId,
-  roundNumber,
-}: {
-  entries: RankingEntry[]
-  activePlayerId: string | null
-  roundNumber: number | null
-}) {
-  return (
-    <section className="ranking-panel" aria-label="Zwischenstand">
-      <div className="ranking-panel__header">
-        <strong className="ranking-panel__title">Zwischenstand</strong>
-        {roundNumber ? <span className="ranking-panel__round">Runde {roundNumber}</span> : null}
-      </div>
-      <div className="ranking-panel__list">
-        {entries.map((entry) => (
-          <div
-            key={entry.playerId}
-            className={`ranking-panel__item${entry.playerId === activePlayerId ? ' ranking-panel__item--active' : ''}`}
-          >
-            <span className="ranking-panel__place">{formatRankPosition(entry.rank)}</span>
-            <span className="ranking-panel__name">{entry.playerName}</span>
-            <span className="ranking-panel__score">{formatScore(entry.score)}</span>
-          </div>
-        ))}
-      </div>
-    </section>
   )
 }
 

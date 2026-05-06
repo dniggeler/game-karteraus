@@ -71,4 +71,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ playerToken }),
     }),
+
+  voteForAnotherRound: (playerToken: string, wantsAnotherRound: boolean) =>
+    request<GameSnapshot>('/api/game/rematch', {
+      method: 'POST',
+      body: JSON.stringify({ playerToken, wantsAnotherRound }),
+    }),
 }

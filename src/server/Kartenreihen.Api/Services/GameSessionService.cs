@@ -127,30 +127,7 @@ public sealed class GameSessionService(
                 throw new InvalidOperationException("Es sind mehr reale Spieler in der Lobby als fuer diese Partie erlaubt.");
             }
 
-            var players = _humanPlayers
-                .Select(player => new PlayerSlot(player.PlayerId, player.Name, ParticipantKind.Human))
-                .ToList();
-
-            while (players.Count < targetPlayerCount)
-            {
-                players.Add(new PlayerSlot(
-                    $"ai-{_nextAiNumber}",
-                    $"AI {_nextAiNumber}",
-                    ParticipantKind.Ai));
-                _nextAiNumber++;
-            }
-
-            var initialChooser = GameEngine.ChooseRoundStarterIndex(players, previousRoundScores: null, _random);
-
-            _match = new MatchState
-            {
-                Id = Guid.NewGuid().ToString("N"),
-                Players = players,
-                TargetPlayerCount = targetPlayerCount,
-                RoundLimit = roundLimit,
-                Status = MatchStatus.Active,
-                CurrentRound = GameEngine.CreateRound(players, 1, initialChooser, _random)
-            };
+            StartMatchLocked(targetPlayerCount, roundLimit);
 
             snapshot = BuildAdminSnapshotLocked(adminToken);
         }
@@ -177,6 +154,45 @@ public sealed class GameSessionService(
         }
 
         await NotifyStateChangedAsync();
+        return snapshot;
+    }
+
+    public async Task<GameSnapshot> VoteForAnotherRoundAsync(string playerToken, bool wantsAnotherRound)
+    {
+        GameSnapshot snapshot;
+        var shouldEnsureAiLoop = false;
+
+        lock (_syncRoot)
+        {
+            var playerSession = GetHumanPlayerSession(playerToken);
+            var match = _match;
+
+            if (match?.Status != MatchStatus.Completed || !match.CompletedBecauseRoundLimit)
+            {
+                throw new InvalidOperationException("Aktuell kann keine weitere Partie bestaetigt werden.");
+            }
+
+            var player = match.Players.SingleOrDefault(candidate => candidate.Id == playerSession.PlayerId && candidate.Kind == ParticipantKind.Human)
+                ?? throw new InvalidOperationException("Dieser Spieler kann fuer keine weitere Partie abstimmen.");
+
+            match.RematchPreferences[player.Id] = wantsAnotherRound;
+
+            if (AllHumanPlayersWantAnotherRoundLocked(match))
+            {
+                StartAnotherRoundLocked(match);
+                shouldEnsureAiLoop = true;
+            }
+
+            snapshot = BuildPlayerSnapshotLocked(playerSession);
+        }
+
+        await NotifyStateChangedAsync();
+
+        if (shouldEnsureAiLoop)
+        {
+            EnsureAiAdvanceLoopRunning();
+        }
+
         return snapshot;
     }
 
@@ -364,6 +380,57 @@ public sealed class GameSessionService(
         return true;
     }
 
+    private void StartMatchLocked(int targetPlayerCount, int? roundLimit)
+    {
+        var players = _humanPlayers
+            .Select(player => new PlayerSlot(player.PlayerId, player.Name, ParticipantKind.Human))
+            .ToList();
+
+        while (players.Count < targetPlayerCount)
+        {
+            players.Add(new PlayerSlot(
+                $"ai-{_nextAiNumber}",
+                $"AI {_nextAiNumber}",
+                ParticipantKind.Ai));
+            _nextAiNumber++;
+        }
+
+        var initialChooser = GameEngine.ChooseRoundStarterIndex(players, previousRoundScores: null, _random);
+
+        _match = new MatchState
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Players = players,
+            TargetPlayerCount = targetPlayerCount,
+            RoundLimit = roundLimit,
+            Status = MatchStatus.Active,
+            CurrentRound = GameEngine.CreateRound(players, 1, initialChooser, _random)
+        };
+    }
+
+    private static bool AllHumanPlayersWantAnotherRoundLocked(MatchState match)
+    {
+        var humanPlayerIds = match.Players
+            .Where(player => player.Kind == ParticipantKind.Human)
+            .Select(player => player.Id)
+            .ToList();
+
+        return humanPlayerIds.Count > 0 &&
+               humanPlayerIds.All(playerId => match.RematchPreferences.TryGetValue(playerId, out var wantsAnotherRound) && wantsAnotherRound);
+    }
+
+    private void StartAnotherRoundLocked(MatchState match)
+    {
+        var previousRound = match.Results.LastOrDefault()
+            ?? throw new InvalidOperationException("Es gibt keine abgeschlossene Runde fuer einen Neustart.");
+
+        var nextChooser = GameEngine.ChooseRoundStarterIndex(match.Players, previousRound.Scores, _random);
+        match.Status = MatchStatus.Active;
+        match.CompletedBecauseRoundLimit = false;
+        match.CurrentRound = GameEngine.CreateRound(match.Players, previousRound.RoundNumber + 1, nextChooser, _random);
+        match.RematchPreferences.Clear();
+    }
+
     private HumanPlayerSession GetHumanPlayerSession(string token)
     {
         var session = _humanPlayers.SingleOrDefault(player => player.Token == token);
@@ -429,6 +496,10 @@ public sealed class GameSessionService(
             canFinishEntireHand,
             BuildPlayerMessage(activeMatch, viewerPlayer),
             BuildFinalRankingMessage(activeMatch),
+            activeMatch is not null && viewerPlayer is not null && CanVoteForAnotherRound(activeMatch),
+            GetViewerWantsAnotherRound(activeMatch, session.PlayerId),
+            CountPlayersWantAnotherRound(activeMatch),
+            CountPlayersRequiredForAnotherRound(activeMatch),
             session.PlayerId,
             GetActivePlayerId(activeMatch),
             BuildPlayerViews(activeMatch, session.PlayerId),
@@ -455,6 +526,10 @@ public sealed class GameSessionService(
             false,
             BuildAdminMessage(),
             BuildFinalRankingMessage(_match),
+            false,
+            null,
+            CountPlayersWantAnotherRound(_match),
+            CountPlayersRequiredForAnotherRound(_match),
             null,
             GetActivePlayerId(_match),
             BuildPlayerViews(_match, null),
@@ -575,7 +650,16 @@ public sealed class GameSessionService(
         {
             if (match.CompletedBecauseRoundLimit && match.RoundLimit.HasValue)
             {
-                return $"Die Partie ist nach {match.RoundLimit.Value} Runde{(match.RoundLimit.Value == 1 ? string.Empty : "n")} beendet.";
+                var viewerDecision = GetViewerWantsAnotherRound(match, viewerPlayer?.Id);
+                var votesNeeded = CountPlayersRequiredForAnotherRound(match) - CountPlayersWantAnotherRound(match);
+
+                return viewerDecision switch
+                {
+                    true when votesNeeded > 0 => $"Du bist bereit fuer eine weitere Runde. Es fehlen noch {votesNeeded} Zusage{(votesNeeded == 1 ? string.Empty : "n")}.",
+                    true => "Alle realen Spieler sind bereit. Die naechste Runde startet automatisch.",
+                    false => "Du hast vorerst gegen eine weitere Runde gestimmt.",
+                    _ => "Die Partie ist beendet. Entscheide, ob du noch eine weitere Runde spielen moechtest."
+                };
             }
 
             return "Die Partie wurde vom Administrator beendet.";
@@ -615,7 +699,7 @@ public sealed class GameSessionService(
                 ? $"Partie laeuft mit festem Limit von {_match.RoundLimit.Value} Runde{(_match.RoundLimit.Value == 1 ? string.Empty : "n")}."
                 : "Partie laeuft ohne Rundelimit. Der Administrator kann sie jederzeit beenden.",
             MatchStatus.Completed when _match.CompletedBecauseRoundLimit && _match.RoundLimit.HasValue =>
-                $"Die Partie ist nach {_match.RoundLimit.Value} Runde{(_match.RoundLimit.Value == 1 ? string.Empty : "n")} beendet.",
+                $"{CountPlayersWantAnotherRound(_match)}/{CountPlayersRequiredForAnotherRound(_match)} reale Spieler moechten eine weitere Runde.",
             MatchStatus.Completed => "Die letzte Partie wurde beendet. Eine neue Partie kann gestartet werden.",
             _ => "Lobby offen."
         };
@@ -628,37 +712,29 @@ public sealed class GameSessionService(
             return null;
         }
 
-        var totalScores = match.Players.ToDictionary(player => player.Id, _ => 0, StringComparer.Ordinal);
-        foreach (var result in match.Results)
+        return $"Die Partie ist nach {match.RoundLimit.Value} Runde{(match.RoundLimit.Value == 1 ? string.Empty : "n")} beendet. Wenn alle realen Spieler zustimmen, startet automatisch die naechste Runde.";
+    }
+
+    private static bool CanVoteForAnotherRound(MatchState match) =>
+        match.Status == MatchStatus.Completed &&
+        match.CompletedBecauseRoundLimit &&
+        match.Results.Count > 0;
+
+    private static bool? GetViewerWantsAnotherRound(MatchState? match, string? playerId)
+    {
+        if (match is null || string.IsNullOrWhiteSpace(playerId) || !match.RematchPreferences.TryGetValue(playerId, out var wantsAnotherRound))
         {
-            foreach (var score in result.Scores)
-            {
-                totalScores[score.PlayerId] = totalScores.GetValueOrDefault(score.PlayerId) + score.RemainingCardCount;
-            }
+            return null;
         }
 
-        var orderedPlayers = match.Players
-            .Select(player => new
-            {
-                player.Name,
-                Score = totalScores[player.Id]
-            })
-            .OrderBy(entry => entry.Score)
-            .ThenBy(entry => entry.Name, StringComparer.CurrentCulture)
-            .ToList();
-
-        var placements = orderedPlayers
-            .Select((entry, index) =>
-            {
-                var sharedRank = orderedPlayers
-                    .Take(index)
-                    .Count(candidate => candidate.Score < entry.Score) + 1;
-                var pointsLabel = entry.Score == 1 ? "Punkt" : "Punkte";
-                return $"{sharedRank}. {entry.Name} ({entry.Score} {pointsLabel})";
-            });
-
-        return $"Endrangliste nach {match.RoundLimit.Value} Runde{(match.RoundLimit.Value == 1 ? string.Empty : "n")}: {string.Join(", ", placements)}";
+        return wantsAnotherRound;
     }
+
+    private static int CountPlayersWantAnotherRound(MatchState? match) =>
+        match?.RematchPreferences.Count(entry => entry.Value) ?? 0;
+
+    private static int CountPlayersRequiredForAnotherRound(MatchState? match) =>
+        match?.Players.Count(player => player.Kind == ParticipantKind.Human) ?? 0;
 
     private static CardView ToCardView(Card card) =>
         new(

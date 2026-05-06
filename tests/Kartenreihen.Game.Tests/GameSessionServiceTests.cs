@@ -50,7 +50,36 @@ public class GameSessionServiceTests
         Assert.Equal(1, completedSnapshot.RoundLimit);
         Assert.Single(completedSnapshot.Results);
         Assert.NotNull(completedSnapshot.FinalRankingMessage);
-        Assert.Contains("Endrangliste nach 1 Runde", completedSnapshot.FinalRankingMessage);
+        Assert.Contains("Die Partie ist nach 1 Runde beendet", completedSnapshot.FinalRankingMessage);
+        Assert.True(completedSnapshot.CanVoteForAnotherRound);
+        Assert.Null(completedSnapshot.ViewerWantsAnotherRound);
+    }
+
+    [Fact]
+    public async Task VoteForAnotherRoundAsync_RestartsMatchAfterAllHumanPlayersAgree()
+    {
+        var service = CreateService(aiMoveDelayMilliseconds: 1);
+        var annaSession = await service.JoinPlayerAsync("Anna");
+        var beatSession = await service.JoinPlayerAsync("Beat");
+        var adminSession = await service.LoginAdminAsync("admin");
+
+        await service.StartGameAsync(adminSession.Token, 3, roundLimit: 1);
+
+        var completedSnapshot = await PlayUntilMatchCompletedAsync(service, [annaSession.Token, beatSession.Token]);
+        Assert.Equal(MatchStatus.Completed.ToString(), completedSnapshot.MatchStatus);
+
+        var annaVoteSnapshot = await service.VoteForAnotherRoundAsync(annaSession.Token, true);
+        Assert.Equal(MatchStatus.Completed.ToString(), annaVoteSnapshot.MatchStatus);
+        Assert.True(annaVoteSnapshot.ViewerWantsAnotherRound ?? false);
+        Assert.Equal(1, annaVoteSnapshot.PlayersWantAnotherRound);
+        Assert.Equal(2, annaVoteSnapshot.PlayersRequiredForAnotherRound);
+
+        var beatVoteSnapshot = await service.VoteForAnotherRoundAsync(beatSession.Token, true);
+        Assert.Equal(MatchStatus.Active.ToString(), beatVoteSnapshot.MatchStatus);
+        Assert.NotNull(beatVoteSnapshot.CurrentRound);
+        Assert.Equal(2, beatVoteSnapshot.CurrentRound!.Number);
+        Assert.Single(beatVoteSnapshot.Results);
+        Assert.Null(beatVoteSnapshot.FinalRankingMessage);
     }
 
     private static async Task<Kartenreihen.Api.Contracts.GameSnapshot> WaitForPlayerTurnAsync(GameSessionService service, string playerToken)
@@ -71,36 +100,48 @@ public class GameSessionServiceTests
 
     private static async Task<Kartenreihen.Api.Contracts.GameSnapshot> PlayUntilMatchCompletedAsync(GameSessionService service, string playerToken)
     {
+        return await PlayUntilMatchCompletedAsync(service, [playerToken]);
+    }
+
+    private static async Task<Kartenreihen.Api.Contracts.GameSnapshot> PlayUntilMatchCompletedAsync(GameSessionService service, IReadOnlyList<string> playerTokens)
+    {
         for (var attempt = 0; attempt < 400; attempt++)
         {
-            var snapshot = service.RestorePlayerSession(playerToken).Snapshot;
-            if (snapshot.MatchStatus == MatchStatus.Completed.ToString())
+            foreach (var playerToken in playerTokens)
             {
-                return snapshot;
-            }
+                var snapshot = service.RestorePlayerSession(playerToken).Snapshot;
+                if (snapshot.MatchStatus == MatchStatus.Completed.ToString())
+                {
+                    return snapshot;
+                }
 
-            if (snapshot.CanFinishEntireHand)
-            {
-                await service.PlayCardsAsync(playerToken, snapshot.ViewerHand.Select(ToCard).ToList());
-                await Task.Delay(5);
-                continue;
-            }
+                if (snapshot.CanFinishEntireHand)
+                {
+                    await service.PlayCardsAsync(playerToken, snapshot.ViewerHand.Select(ToCard).ToList());
+                    await Task.Delay(5);
+                    goto ContinueLoop;
+                }
 
-            if (snapshot.CanPlay && snapshot.PlayableCards.Count > 0)
-            {
-                await service.PlayCardsAsync(playerToken, [ToCard(snapshot.PlayableCards[0])]);
-                await Task.Delay(5);
-                continue;
-            }
+                if (snapshot.CanPlay && snapshot.PlayableCards.Count > 0)
+                {
+                    await service.PlayCardsAsync(playerToken, [ToCard(snapshot.PlayableCards[0])]);
+                    await Task.Delay(5);
+                    goto ContinueLoop;
+                }
 
-            if (snapshot.CanPass)
-            {
-                await service.PassAsync(playerToken);
-                await Task.Delay(5);
-                continue;
+                if (snapshot.CanPass)
+                {
+                    await service.PassAsync(playerToken);
+                    await Task.Delay(5);
+                    goto ContinueLoop;
+                }
             }
 
             await Task.Delay(5);
+            continue;
+
+            ContinueLoop:
+            continue;
         }
 
         throw new InvalidOperationException("Die Partie wurde nicht rechtzeitig abgeschlossen.");

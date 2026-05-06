@@ -78,6 +78,9 @@ app.MapPost("/api/game/play", async (PlayCardsRequest request, GameSessionServic
 app.MapPost("/api/game/pass", async (PassTurnRequest request, GameSessionService service) =>
     await ExecuteAsync(() => service.PassAsync(request.PlayerToken)));
 
+app.MapPost("/api/game/rematch", async (RematchVoteRequest request, GameSessionService service) =>
+    await ExecuteAsync(() => service.VoteForAnotherRoundAsync(request.PlayerToken, request.WantsAnotherRound)));
+
 app.MapHub<GameHub>("/hubs/game");
 
 if (hasClientApp)

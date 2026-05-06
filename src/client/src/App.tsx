@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { api } from './api'
 import { AuthPanel } from './components/AuthPanel'
+import { FinalRankingOverlay } from './components/FinalRankingOverlay'
 import { HandPanel } from './components/HandPanel'
 import { HeroPanel } from './components/HeroPanel'
 import { HistoryPanel } from './components/HistoryPanel'
@@ -10,7 +11,7 @@ import { RulesPanel } from './components/RulesPanel'
 import { SeatingPanel } from './components/SeatingPanel'
 import { getApiBaseUrl } from './config'
 import { SUIT_ORDER, compareCardsByRank, getRankSortIndex } from './gameUi'
-import { buildRankingEntries, formatRankPosition, formatScore } from './ranking'
+import { buildRankingEntries } from './ranking'
 import type {
   AiCardFlightView,
   CardView,
@@ -350,6 +351,17 @@ function App() {
     })
   }
 
+  const voteForAnotherRound = async (wantsAnotherRound: boolean) => {
+    if (!session || session.role !== 'player' || !snapshot?.canVoteForAnotherRound) {
+      return
+    }
+
+    await runAction(async () => {
+      const nextSnapshot = await api.voteForAnotherRound(session.token, wantsAnotherRound)
+      setSnapshot(nextSnapshot)
+    })
+  }
+
   const playSelectedCards = async () => {
     if (!session || session.role !== 'player' || selectedCardViews.length === 0) {
       return
@@ -448,18 +460,17 @@ function App() {
       {showRules ? <RulesPanel /> : null}
 
       {error ? <div className="error-banner">{error}</div> : null}
-      {snapshot?.finalRankingMessage ? (
-        <section className="message-box final-ranking-banner" aria-live="polite">
-          <strong>Endrangliste</strong>
-          <p>{snapshot.finalRankingMessage}</p>
-          <div className="final-ranking-banner__entries">
-            {finalRankingEntries.map((entry) => (
-              <span key={entry.playerId}>
-                {formatRankPosition(entry.rank)}: {entry.playerName} ({formatScore(entry.score)})
-              </span>
-            ))}
-          </div>
-        </section>
+      {session?.role === 'player' && snapshot?.finalRankingMessage ? (
+        <FinalRankingOverlay
+          entries={finalRankingEntries}
+          finalRankingMessage={snapshot.finalRankingMessage}
+          viewerPlayerId={snapshot.viewerPlayerId}
+          viewerWantsAnotherRound={snapshot.viewerWantsAnotherRound}
+          playersWantAnotherRound={snapshot.playersWantAnotherRound}
+          playersRequiredForAnotherRound={snapshot.playersRequiredForAnotherRound}
+          isBusy={isBusy}
+          onVote={voteForAnotherRound}
+        />
       ) : null}
 
       <section className="layout-grid">

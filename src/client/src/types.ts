@@ -21,6 +21,10 @@ export interface GameSnapshot {
   canFinishEntireHand: boolean
   message: string | null
   finalRankingMessage: string | null
+  canVoteForAnotherRound: boolean
+  viewerWantsAnotherRound: boolean | null
+  playersWantAnotherRound: number
+  playersRequiredForAnotherRound: number
   viewerPlayerId: string | null
   activePlayerId: string | null
   players: PlayerView[]
