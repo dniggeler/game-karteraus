@@ -22,14 +22,14 @@ export function HeroPanel({
   const heroCopy =
     startupPage === 'admin'
       ? 'Hier meldet sich der Administrator an, startet Partien mit 3 oder 4 Plaetzen und steuert den gemeinsamen Spielraum.'
-      : 'Hier treten Spieler mit Namen bei und spielen in ihrer eigenen Ansicht. Fehlende Plaetze werden automatisch mit AI gefuellt.'
+      : null
 
   return (
     <header className="hero-panel">
       <div>
         <p className="eyebrow">{eyebrowLabel}</p>
         <h1>Kartenlegen Schweizer Art</h1>
-        <p className="hero-copy">{heroCopy}</p>
+        {heroCopy ? <p className="hero-copy">{heroCopy}</p> : null}
       </div>
       <div className="hero-actions">
         <button className="secondary-button" onClick={onToggleRules}>
