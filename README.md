@@ -43,7 +43,7 @@ Die Einstiegspunkte sind `http://localhost:5173/player` fuer Spieler und `http:/
 - Die Admin-Oberflaeche ist unter `/admin` erreichbar, die Spieler-Oberflaeche unter `/player`.
 - Fuer produktive Deployments sollte der Wert per `Game__AdminCode` ueberschrieben werden.
 - Beim Start einer Partie kann der Administrator optional eine feste Rundenzahl setzen; leer bedeutet unbegrenzt.
-- Nach Erreichen des Rundelimits sehen alle realen Spieler eine Endranglisten-Einblendung und koennen gemeinsam die naechste Runde freigeben.
+- Nach Erreichen des Rundelimits sehen alle realen Spieler eine Endranglisten-Einblendung und koennen gemeinsam eine neue Partie mit demselben Rundelimit und zurueckgesetztem Ranking starten.
 - Die Denkzeit der AI-Spieler kann per `Game__AiMoveDelayMilliseconds` angepasst werden. Standard: `1200`.
 
 ## Deployment

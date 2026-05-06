@@ -460,7 +460,9 @@ function App() {
       {showRules ? <RulesPanel /> : null}
 
       {error ? <div className="error-banner">{error}</div> : null}
-      {session?.role === 'player' && snapshot?.finalRankingMessage ? (
+      {session?.role === 'player' &&
+      snapshot?.finalRankingMessage &&
+      snapshot.viewerWantsAnotherRound !== false ? (
         <FinalRankingOverlay
           entries={finalRankingEntries}
           finalRankingMessage={snapshot.finalRankingMessage}

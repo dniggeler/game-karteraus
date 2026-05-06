@@ -27,10 +27,10 @@ export function FinalRankingOverlay({
     viewerWantsAnotherRound === true
       ? missingVotes > 0
         ? `Deine Zusage ist gespeichert. Noch ${missingVotes} weitere Stimme${missingVotes === 1 ? '' : 'n'} fehlt${missingVotes === 1 ? '' : 'en'}.`
-        : 'Alle realen Spieler sind bereit. Die naechste Runde startet automatisch.'
+        : 'Alle realen Spieler sind bereit. Eine neue Partie mit zurueckgesetztem Ranking startet automatisch.'
       : viewerWantsAnotherRound === false
-        ? 'Du hast vorerst abgelehnt. Die naechste Runde startet erst, wenn alle realen Spieler zustimmen.'
-        : 'Wenn alle realen Spieler zustimmen, startet automatisch die naechste Runde.'
+        ? 'Du hast vorerst abgelehnt. Eine neue Partie startet erst, wenn alle realen Spieler zustimmen.'
+        : 'Wenn alle realen Spieler zustimmen, startet automatisch eine neue Partie mit zurueckgesetztem Ranking.'
 
   return (
     <div className="final-ranking-overlay" role="dialog" aria-modal="true" aria-labelledby="final-ranking-title">
@@ -50,7 +50,7 @@ export function FinalRankingOverlay({
         />
 
         <div className="final-ranking-overlay__rematch">
-          <strong>Noch eine Runde?</strong>
+          <strong>Noch eine Partie?</strong>
           <p>{rematchStatus}</p>
           <span className="final-ranking-overlay__progress">
             {playersWantAnotherRound}/{playersRequiredForAnotherRound} reale Spieler sind bereit.
@@ -61,7 +61,7 @@ export function FinalRankingOverlay({
               onClick={() => onVote(true)}
               disabled={isBusy || viewerWantsAnotherRound === true}
             >
-              Ja, noch eine Runde
+              Ja, noch eine Partie
             </button>
             <button
               type="button"

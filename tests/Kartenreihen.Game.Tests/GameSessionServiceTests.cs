@@ -56,7 +56,7 @@ public class GameSessionServiceTests
     }
 
     [Fact]
-    public async Task VoteForAnotherRoundAsync_RestartsMatchAfterAllHumanPlayersAgree()
+    public async Task VoteForAnotherRoundAsync_StartsFreshMatchAfterAllHumanPlayersAgree()
     {
         var service = CreateService(aiMoveDelayMilliseconds: 1);
         var annaSession = await service.JoinPlayerAsync("Anna");
@@ -77,8 +77,8 @@ public class GameSessionServiceTests
         var beatVoteSnapshot = await service.VoteForAnotherRoundAsync(beatSession.Token, true);
         Assert.Equal(MatchStatus.Active.ToString(), beatVoteSnapshot.MatchStatus);
         Assert.NotNull(beatVoteSnapshot.CurrentRound);
-        Assert.Equal(2, beatVoteSnapshot.CurrentRound!.Number);
-        Assert.Single(beatVoteSnapshot.Results);
+        Assert.Equal(1, beatVoteSnapshot.CurrentRound!.Number);
+        Assert.Empty(beatVoteSnapshot.Results);
         Assert.Null(beatVoteSnapshot.FinalRankingMessage);
     }
 

@@ -179,7 +179,7 @@ public sealed class GameSessionService(
 
             if (AllHumanPlayersWantAnotherRoundLocked(match))
             {
-                StartAnotherRoundLocked(match);
+                StartMatchLocked(match.TargetPlayerCount, match.RoundLimit);
                 shouldEnsureAiLoop = true;
             }
 
@@ -419,18 +419,6 @@ public sealed class GameSessionService(
                humanPlayerIds.All(playerId => match.RematchPreferences.TryGetValue(playerId, out var wantsAnotherRound) && wantsAnotherRound);
     }
 
-    private void StartAnotherRoundLocked(MatchState match)
-    {
-        var previousRound = match.Results.LastOrDefault()
-            ?? throw new InvalidOperationException("Es gibt keine abgeschlossene Runde fuer einen Neustart.");
-
-        var nextChooser = GameEngine.ChooseRoundStarterIndex(match.Players, previousRound.Scores, _random);
-        match.Status = MatchStatus.Active;
-        match.CompletedBecauseRoundLimit = false;
-        match.CurrentRound = GameEngine.CreateRound(match.Players, previousRound.RoundNumber + 1, nextChooser, _random);
-        match.RematchPreferences.Clear();
-    }
-
     private HumanPlayerSession GetHumanPlayerSession(string token)
     {
         var session = _humanPlayers.SingleOrDefault(player => player.Token == token);
@@ -655,10 +643,10 @@ public sealed class GameSessionService(
 
                 return viewerDecision switch
                 {
-                    true when votesNeeded > 0 => $"Du bist bereit fuer eine weitere Runde. Es fehlen noch {votesNeeded} Zusage{(votesNeeded == 1 ? string.Empty : "n")}.",
-                    true => "Alle realen Spieler sind bereit. Die naechste Runde startet automatisch.",
-                    false => "Du hast vorerst gegen eine weitere Runde gestimmt.",
-                    _ => "Die Partie ist beendet. Entscheide, ob du noch eine weitere Runde spielen moechtest."
+                    true when votesNeeded > 0 => $"Du bist bereit fuer eine neue Partie. Es fehlen noch {votesNeeded} Zusage{(votesNeeded == 1 ? string.Empty : "n")}.",
+                    true => "Alle realen Spieler sind bereit. Eine neue Partie mit zurueckgesetztem Ranking startet automatisch.",
+                    false => "Du hast vorerst gegen eine neue Partie gestimmt.",
+                    _ => "Die Partie ist beendet. Entscheide, ob du noch einmal von vorne spielen moechtest."
                 };
             }
 
@@ -699,7 +687,7 @@ public sealed class GameSessionService(
                 ? $"Partie laeuft mit festem Limit von {_match.RoundLimit.Value} Runde{(_match.RoundLimit.Value == 1 ? string.Empty : "n")}."
                 : "Partie laeuft ohne Rundelimit. Der Administrator kann sie jederzeit beenden.",
             MatchStatus.Completed when _match.CompletedBecauseRoundLimit && _match.RoundLimit.HasValue =>
-                $"{CountPlayersWantAnotherRound(_match)}/{CountPlayersRequiredForAnotherRound(_match)} reale Spieler moechten eine weitere Runde.",
+                $"{CountPlayersWantAnotherRound(_match)}/{CountPlayersRequiredForAnotherRound(_match)} reale Spieler moechten eine neue Partie.",
             MatchStatus.Completed => "Die letzte Partie wurde beendet. Eine neue Partie kann gestartet werden.",
             _ => "Lobby offen."
         };
@@ -712,7 +700,7 @@ public sealed class GameSessionService(
             return null;
         }
 
-        return $"Die Partie ist nach {match.RoundLimit.Value} Runde{(match.RoundLimit.Value == 1 ? string.Empty : "n")} beendet. Wenn alle realen Spieler zustimmen, startet automatisch die naechste Runde.";
+        return $"Die Partie ist nach {match.RoundLimit.Value} Runde{(match.RoundLimit.Value == 1 ? string.Empty : "n")} beendet. Wenn alle realen Spieler zustimmen, startet automatisch eine neue Partie mit zurueckgesetztem Ranking und erneutem Rundelimit.";
     }
 
     private static bool CanVoteForAnotherRound(MatchState match) =>
