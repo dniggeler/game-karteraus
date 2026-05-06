@@ -827,7 +827,7 @@ input {
   border-color: var(--theme-playable);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 900px) {
   .hero-panel h1 {
     font-size: clamp(1.85rem, 4.5vw, 3rem);
   }
