@@ -28,7 +28,7 @@ export function HeroPanel({
     <header className="hero-panel">
       <div>
         <p className="eyebrow">{eyebrowLabel}</p>
-        <h1>Kartenlegen Schweizer Art</h1>
+        <h1>Schweizer Kartenlegen</h1>
         {heroCopy ? <p className="hero-copy">{heroCopy}</p> : null}
       </div>
       <div className="hero-actions">
