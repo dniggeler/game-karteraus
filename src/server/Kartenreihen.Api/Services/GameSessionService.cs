@@ -32,6 +32,11 @@ public sealed class GameSessionService(
             throw new InvalidOperationException("Bitte einen Namen eingeben.");
         }
 
+        if (trimmedName.Length > 5)
+        {
+            throw new InvalidOperationException("Der Spielername darf hoechstens 5 Zeichen lang sein.");
+        }
+
         SessionResponse response;
         lock (_syncRoot)
         {

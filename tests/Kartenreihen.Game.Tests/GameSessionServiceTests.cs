@@ -11,6 +11,16 @@ namespace Kartenreihen.Game.Tests;
 public class GameSessionServiceTests
 {
     [Fact]
+    public async Task JoinPlayerAsync_RejectsNamesLongerThanFiveCharacters()
+    {
+        var service = CreateService(aiMoveDelayMilliseconds: 25);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.JoinPlayerAsync("Monika"));
+
+        Assert.Equal("Der Spielername darf hoechstens 5 Zeichen lang sein.", exception.Message);
+    }
+
+    [Fact]
     public async Task PlayCardsAsync_PausesBeforeAiActs()
     {
         var service = CreateService(aiMoveDelayMilliseconds: 25);

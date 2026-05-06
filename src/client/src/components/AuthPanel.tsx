@@ -29,7 +29,7 @@ export function AuthPanel({
   function handlePlayerJoinSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (isBusy || playerName.trim().length === 0) {
+    if (isBusy || playerName.trim().length === 0 || playerName.trim().length > 5) {
       return
     }
 
@@ -60,10 +60,11 @@ export function AuthPanel({
               <h3>Als Spieler beitreten</h3>
               <input
                 value={playerName}
-                onChange={(event) => onPlayerNameChange(event.target.value)}
+                onChange={(event) => onPlayerNameChange(event.target.value.slice(0, 5))}
                 placeholder="Dein Name"
+                maxLength={5}
               />
-              <button type="submit" disabled={isBusy || playerName.trim().length === 0}>
+              <button type="submit" disabled={isBusy || playerName.trim().length === 0 || playerName.trim().length > 5}>
                 Beitreten
               </button>
             </form>

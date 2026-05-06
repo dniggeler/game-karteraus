@@ -936,17 +936,17 @@ input {
 
   .hand-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+    gap: 8px;
     width: 100%;
   }
 
   .card-button {
-    width: min(100%, 96px);
+    width: min(100%, 82px);
     min-height: 0;
     aspect-ratio: 140 / 196;
     justify-self: center;
-    padding: 6px;
+    padding: 5px;
   }
 }
 
@@ -1038,12 +1038,13 @@ input {
   }
 
   .hand-grid {
-    grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+    gap: 6px;
   }
 
   .card-button {
-    width: min(100%, 84px);
+    width: min(100%, 72px);
+    padding: 4px;
   }
 }
 
