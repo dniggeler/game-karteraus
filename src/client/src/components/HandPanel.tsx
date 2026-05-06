@@ -12,6 +12,7 @@ interface HandPanelProps {
   onToggleCardSelection: (card: CardView) => void
   onPlayCard: (card: CardView) => void
   onPlaySelectedCards: () => void
+  onPlayEntireHand: () => void
   onPassTurn: () => void
 }
 
@@ -25,6 +26,7 @@ export function HandPanel({
   onToggleCardSelection,
   onPlayCard,
   onPlaySelectedCards,
+  onPlayEntireHand,
   onPassTurn,
 }: HandPanelProps) {
   const pendingClickRef = useRef<number | null>(null)
@@ -98,6 +100,11 @@ export function HandPanel({
           </div>
 
           <div className="button-row">
+            {snapshot.canFinishEntireHand ? (
+              <button onClick={onPlayEntireHand} disabled={isBusy || !snapshot.canPlay}>
+                Alle Karten spielen
+              </button>
+            ) : null}
             <button
               onClick={onPlaySelectedCards}
               disabled={isBusy || !snapshot.canPlay || selectedCardCount === 0}

@@ -352,6 +352,18 @@ function App() {
     })
   }
 
+  const playEntireHand = async () => {
+    if (!session || session.role !== 'player' || !snapshot?.canFinishEntireHand) {
+      return
+    }
+
+    await runAction(async () => {
+      const nextSnapshot = await api.playCards(session.token, snapshot.viewerHand)
+      setSnapshot(nextSnapshot)
+      setSelectedCards([])
+    })
+  }
+
   const toggleCardSelection = (card: CardView) => {
     setSelectedCards((currentSelection) =>
       currentSelection.includes(card.code)
@@ -437,6 +449,7 @@ function App() {
           onToggleCardSelection={toggleCardSelection}
           onPlayCard={playCard}
           onPlaySelectedCards={playSelectedCards}
+          onPlayEntireHand={playEntireHand}
           onPassTurn={passTurn}
         />
         {session?.role === 'admin' ? <HistoryPanel currentRound={snapshot?.currentRound ?? null} /> : null}
