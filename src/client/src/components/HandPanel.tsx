@@ -66,9 +66,6 @@ export function HandPanel({
     <section className="panel hand-panel">
       <div className="section-header">
         <h2>Deine Hand</h2>
-        {snapshot?.canFinishEntireHand ? (
-          <span className="session-pill">Kompletter Finish-Zug moeglich</span>
-        ) : null}
       </div>
 
       {snapshot?.viewerRole === 'player' ? (
