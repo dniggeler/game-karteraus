@@ -43,5 +43,5 @@ export function formatScore(score: number) {
 }
 
 export function formatRankPosition(rank: number) {
-  return `Platz ${rank}`
+  return `Rang ${rank}`
 }

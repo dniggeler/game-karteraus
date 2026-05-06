@@ -598,10 +598,10 @@ input {
 
 .ranking-panel {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   min-width: 0;
-  padding: 14px 16px;
+  padding: 12px 14px;
   border-radius: 16px;
   border: 1px solid var(--theme-border-card);
   background: var(--theme-card-bg);
@@ -628,15 +628,15 @@ input {
 
 .ranking-panel__list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .ranking-panel__item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  column-gap: 8px;
+  padding: 7px 9px;
   border-radius: 12px;
   background: rgba(11, 15, 28, 0.18);
 }
@@ -666,6 +666,7 @@ input {
 
 .ranking-panel__score {
   font-weight: 700;
+  justify-self: end;
 }
 
 .table-round-layout {
