@@ -236,9 +236,30 @@ function App() {
     }
 
     if (!hasWinnerSplashBaselineRef.current) {
-      lastSeenRoundResultRef.current = latestRoundResult?.roundNumber ?? null
       hasWinnerSplashBaselineRef.current = true
-      return
+
+      if (!latestRoundResult) {
+        lastSeenRoundResultRef.current = null
+        return
+      }
+
+      lastSeenRoundResultRef.current = latestRoundResult.roundNumber
+
+      if (!shouldShowWinnerSplashOnBaseline(snapshot, latestRoundResult)) {
+        return
+      }
+
+      setWinnerSplash(latestRoundResult)
+
+      const timeoutId = window.setTimeout(() => {
+        setWinnerSplash((current) =>
+          current?.roundNumber === latestRoundResult.roundNumber ? null : current,
+        )
+      }, 2000)
+
+      return () => {
+        window.clearTimeout(timeoutId)
+      }
     }
 
     if (!latestRoundResult) {
@@ -535,6 +556,19 @@ function getTargetStackPosition(
 
 function toMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Ein unerwarteter Fehler ist aufgetreten.'
+}
+
+function shouldShowWinnerSplashOnBaseline(
+  snapshot: GameSnapshot,
+  latestRoundResult: RoundResultView,
+) {
+  const currentRound = snapshot.currentRound
+
+  return (
+    currentRound !== null &&
+    currentRound.number === latestRoundResult.roundNumber + 1 &&
+    currentRound.actions.length === 0
+  )
 }
 
 export default App
