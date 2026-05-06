@@ -236,6 +236,7 @@ function App() {
     }
 
     if (!hasWinnerSplashBaselineRef.current) {
+      const seenWinnerRound = readSeenWinnerRound(startupPage, session.token)
       hasWinnerSplashBaselineRef.current = true
 
       if (!latestRoundResult) {
@@ -245,10 +246,16 @@ function App() {
 
       lastSeenRoundResultRef.current = latestRoundResult.roundNumber
 
-      if (!shouldShowWinnerSplashOnBaseline(snapshot, latestRoundResult)) {
+      if (seenWinnerRound === null) {
+        persistSeenWinnerRound(startupPage, session.token, latestRoundResult.roundNumber)
         return
       }
 
+      if (latestRoundResult.roundNumber <= seenWinnerRound) {
+        return
+      }
+
+      persistSeenWinnerRound(startupPage, session.token, latestRoundResult.roundNumber)
       setWinnerSplash(latestRoundResult)
 
       const timeoutId = window.setTimeout(() => {
@@ -271,6 +278,7 @@ function App() {
     }
 
     lastSeenRoundResultRef.current = latestRoundResult.roundNumber
+    persistSeenWinnerRound(startupPage, session.token, latestRoundResult.roundNumber)
     setWinnerSplash(latestRoundResult)
 
     const timeoutId = window.setTimeout(() => {
@@ -282,7 +290,7 @@ function App() {
     return () => {
       window.clearTimeout(timeoutId)
     }
-  }, [latestRoundResult, session?.role, snapshot])
+  }, [latestRoundResult, session?.role, session?.token, snapshot, startupPage])
 
   const joinAsPlayer = async () => {
     await runAction(async () => {
@@ -531,6 +539,24 @@ function clearSession(page: StartupPage) {
   window.localStorage.removeItem(getStorageKey(page))
 }
 
+function getSeenWinnerRoundStorageKey(page: StartupPage, token: string) {
+  return `kartenreihen-seen-winner-round-${page}-${token}`
+}
+
+function readSeenWinnerRound(page: StartupPage, token: string) {
+  const rawValue = window.sessionStorage.getItem(getSeenWinnerRoundStorageKey(page, token))
+  if (!rawValue) {
+    return null
+  }
+
+  const roundNumber = Number.parseInt(rawValue, 10)
+  return Number.isNaN(roundNumber) ? null : roundNumber
+}
+
+function persistSeenWinnerRound(page: StartupPage, token: string, roundNumber: number) {
+  window.sessionStorage.setItem(getSeenWinnerRoundStorageKey(page, token), roundNumber.toString())
+}
+
 function getTargetStackPosition(
   currentRound: NonNullable<GameSnapshot['currentRound']>,
   card: CardView,
@@ -556,19 +582,6 @@ function getTargetStackPosition(
 
 function toMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Ein unerwarteter Fehler ist aufgetreten.'
-}
-
-function shouldShowWinnerSplashOnBaseline(
-  snapshot: GameSnapshot,
-  latestRoundResult: RoundResultView,
-) {
-  const currentRound = snapshot.currentRound
-
-  return (
-    currentRound !== null &&
-    currentRound.number === latestRoundResult.roundNumber + 1 &&
-    currentRound.actions.length === 0
-  )
 }
 
 export default App
