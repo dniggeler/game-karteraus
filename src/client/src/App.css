@@ -256,11 +256,11 @@
   top: 24px;
   right: 24px;
   z-index: 4;
-  width: min(320px, calc(100% - 48px));
+  width: min(280px, calc(100% - 48px));
 }
 
 .seating-panel--with-ranking .section-header {
-  padding-right: min(360px, 38vw);
+  padding-right: min(320px, 34vw);
 }
 
 .seating-panel__header-side {
